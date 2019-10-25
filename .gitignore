@@ -158,3 +158,8 @@ geckodriver.log
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# images
+*.png
+*.jpg
+*.jpeg
