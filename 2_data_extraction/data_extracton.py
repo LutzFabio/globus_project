@@ -1,44 +1,31 @@
 import webp
 import json
 import re
+from pandas.io.json import json_normalize
+
+def GetOnlySchuh(x):
+    if re.match(r'globus:pim\.category\.(\w+)\.schuhe', x[0]['key']):
+        return True
+    else:
+        return False
+
 
 with open('prod_1450_1500.json') as json_file:
     data = json.load(json_file)
 data=data['items']
 
-f=open("links.txt", "a+")
-
-from pandas.io.json import json_normalize
+f=open("links.txt", "a+") #can save links and run them from bash
 
 df=json_normalize(data, max_level=20)
 
-print(df.columns)
+df['categories']=df['categories'].apply(GetOnlySchuh)
+df=df[df['categories']==True]
 
-'''
-
-for product in data:
-    i = 0
-    if re.match(r'globus:pim\.category\.(\w+)\.schuhe',product['categories'][0]['key']):
-        for groups in product['productItemGroups']:
-            v=groups['productItemGroupId']
-       # link = product['href']
-       # f.write(link + '\n')
-       # i+=1
-f.close()
-
-'''
-
-print(data)
-
-'''
-"key": "globus:pim.category.herren.hosen"
-img = webp.load_image('image.webp', 'RGBA')
-
-
-"categories": [
-        {
-          "assetId": 518222,
-          "key": "globus:pim.category.damenaccessoires.taschen"
-        },
-
-'''
+for index, row in df.iterrows():
+    r=row['productItemGroups']
+    df_groups = json_normalize(r, max_level=20)
+    df_groups=df_groups[~df_groups.media.isna()]
+    m=df_groups.media.values[0]
+    df_media=json_normalize(m, max_level=20)
+    img_links=df_media['formats'].apply(lambda x: x[0]['url'])
+    print(img_links)
