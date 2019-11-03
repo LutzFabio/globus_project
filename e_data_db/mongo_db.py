@@ -5,7 +5,7 @@ import json
 from a_configs.api import *
 
 
-json_path = '/home/fabiolutz/propulsion/globus_project/b_data' \
+json_path = '/home/fabiolutz/propulsion/globus_project/c_data_parsing' \
             '/raw_json_AllProducts/'
 
 
