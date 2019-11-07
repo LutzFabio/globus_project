@@ -22,7 +22,8 @@ pat = ['gestreift', 'klein gemustert', 'kariert', 'karo', 'Glattleder',
        'Lack']
 
 cols_sel = ['globus_id', 'descr_clean', 'hierarchy_clean',
-            'gender', 'source_color', 'color_clean', 'features_clean']
+            'gender', 'source_color', 'color_clean', 'season',
+            'features_clean']
 
 
 def data_clean(df):
@@ -81,7 +82,14 @@ def data_clean(df):
     sel = df_red[['descr_clean', 'features_tmp']]
     df_red['features_clean'] = sel.apply(descFeat, axis=1)
 
-    return df_red, df_red[cols_sel]
+    # Get reduced data frame for selected columns.
+    df_red_sel = df_red[cols_sel]
+
+    # Split it to train/validation and test data.
+    train_val = df_red_sel.sample(frac=0.8, random_state=200)
+    test = df_red_sel[~df_red_sel.index.isin(train_val.index)]
+
+    return df_red, df_red_sel, train_val, test
 
 
 def cleanFeat(x):
@@ -187,8 +195,10 @@ if __name__ == '__main__':
     data['features'] = data['features'].apply(literal_eval)
 
     # Clean the data.
-    data_c, data_c_red = data_clean(data)
+    data_c, data_c_red, data_c_train, data_c_test = data_clean(data)
 
     # Save it to another csv.
     data_c.to_csv(path_s + 'meta_clean.csv')
     data_c_red.to_csv(path_s + 'meta_clean_red.csv')
+    data_c_train.to_csv(path_s + 'meta_clean_red_train.csv')
+    data_c_test.to_csv(path_s + 'meta_clean_red_test.csv')

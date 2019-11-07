@@ -405,16 +405,16 @@ def get_json_files(path):
 
 if __name__ == '__main__':
 
-    # Define the json path.
-    json_path = './test.json'
-
-    # Access to API.
-    myToken = str(pd.read_csv('token_file.txt',
-                              header=None).values.squeeze())
-
-    filter_json(json_path, myToken)
-
-    # json_path = sys.argv[1]
-    # token = sys.argv[2]
+    # # Define the json path.
+    # json_path = './test.json'
     #
-    # filter_json(json_path, token)
+    # # Access to API.
+    # myToken = str(pd.read_csv('token_file.txt',
+    #                           header=None).values.squeeze())
+    #
+    # filter_json(json_path, myToken)
+
+    json_path = sys.argv[1]
+    token = sys.argv[2]
+
+    filter_json(json_path, token)
