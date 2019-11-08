@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import re
 from ast import literal_eval
+from collections import Counter
 
 
 # Define list used for the data cleaning.
@@ -50,13 +51,17 @@ def data_clean(df):
     # Get clean color.
     df_red['color_clean'] = df_red['color'].apply(cleanCol)
 
+    # Get the clean seasons.
+    df_red['season_clean'] = df_red['season'].apply(cleanSeas)
+
     # Separate description and fittype/bugelfrei.
     df_red['descr_clean'] = df_red['descr'].apply(delFit)
     df_red['fit'] = df_red['descr'].apply(findFit)
     df_red['bugelfrei'] = df_red['descr'].apply(findBugel)
 
     # Add the fittype, pattern and bugelfrei to features.
-    sel = df_red[['features', 'pattern', 'fit', 'bugelfrei']]
+    sel = df_red[['features', 'pattern', 'fit', 'bugelfrei', 'color_clean',
+                  'season_clean']]
     df_red['features_tmp'] = sel.apply(extFeat, axis=1)
 
     # Clean overall data frame.
@@ -75,11 +80,15 @@ def data_clean(df):
         'hierarchy_2'] + '/' + df_red['descr_clean'] + '/' + df_red[
         'globus_id'].apply(str)
 
+    # Get list of features that occur less then 10 times.
+    lst_feat_rare = listRareFeat(df_red['features_tmp'].to_frame())
+
     # Clean the features.
-    df_red['features_tmp'] = df_red['features_tmp'].apply(cleanFeat)
+    df_red['features_tmp_2'] = df_red['features_tmp'].apply(cleanFeat,
+                                                            rare=lst_feat_rare)
 
     # Get rid of descriptions in features and vice versa.
-    sel = df_red[['descr_clean', 'features_tmp']]
+    sel = df_red[['descr_clean', 'features_tmp_2']]
     df_red['features_clean'] = sel.apply(descFeat, axis=1)
 
     # Get reduced data frame for selected columns.
@@ -92,7 +101,37 @@ def data_clean(df):
     return df_red, df_red_sel, train_val, test
 
 
-def cleanFeat(x):
+def listRareFeat(df):
+
+    whole_lst = [i for s in df['features_tmp'].tolist() for i in s]
+
+    count_sort = Counter(whole_lst).most_common()
+
+    rare = [t[0] for t in count_sort if t[1] < 10]
+
+    rare_cl = cleanFeat(rare)
+
+    return rare_cl
+
+
+def cleanSeas(x):
+
+    if x == 'W':
+        s = 'winter'
+
+    elif x == 'S':
+        s = 'sommer'
+
+    elif x == 'B':
+        s = 'beidesaison'
+
+    else:
+        s = np.nan
+
+    return s
+
+
+def cleanFeat(x, rare=None):
 
     feat_c = []
 
@@ -105,18 +144,25 @@ def cleanFeat(x):
         f_c = f_c.replace('ä', 'a').replace('ö', 'o').replace('ü', 'u')
         f_c = re.sub(r'[^a-zA-Z0-9]', '', f_c).lower()
 
+        if 'mntel' in f_c:
+            f_c = f_c.replace('mntel', 'mantel')
+
         feat_c.append(f_c)
 
     feat_c = list(set(feat_c))
 
-    return feat_c
+    if rare is not None:
+        feat_c_exr = [t for t in feat_c if t not in rare]
+        return feat_c_exr
+    else:
+        return feat_c
 
 
 def descFeat(row):
 
     feat_c = []
 
-    for f in row['features_tmp']:
+    for f in row['features_tmp_2']:
 
         if len(f) > 3:
             if not row['descr_clean'] in f and not f in row['descr_clean']:
@@ -139,6 +185,12 @@ def extFeat(row):
 
     if not pd.isna(row['bugelfrei']):
         feat.append(row['bugelfrei'])
+
+    if not pd.isna(row['color_clean']):
+        feat.append(row['color_clean'])
+
+    if not pd.isna(row['season_clean']):
+        feat.append(row['season_clean'])
 
     return feat
 
