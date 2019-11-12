@@ -6,16 +6,20 @@ from collections import Counter
 
 
 # Define list used for the data cleaning.
+# cat = ['taschen', 'schuhe', 'pullover-strick', 'top-shirts-sweats',
+#        'schals', 'hemden', 'hosen', 'oberteile', 'blusen-tuniken',
+#        'shirts-tops-sweats', 'kleider', 'jacken', 'tagwasche',
+#        'strumpfmode', 'loungewearyoga', 'unterteile', 'wasche-pyjamas',
+#        'wasche', 'bademode', 'socken', 'jeans', 'mantel',
+#        'krawatten-fliegen-pochetten', 'kopfbedeckungen', 'kleider-sets',
+#        'nachtwasche', 'jupe', 'blazer', 'vestons', 'shorts-bermudas',
+#        'gurtel', 'handschuhe', 'westen-gilets', 'anzuge', 'poncho-cape',
+#        'lederjacken-mantel', 'overalls', 'morgen-bademantel',
+#        'lederjacken-ledermantel', 'shapewear']
+
 cat = ['taschen', 'schuhe', 'pullover-strick', 'top-shirts-sweats',
        'schals', 'hemden', 'hosen', 'oberteile', 'blusen-tuniken',
-       'shirts-tops-sweats', 'kleider', 'jacken', 'tagwasche',
-       'strumpfmode', 'loungewearyoga', 'unterteile', 'wasche-pyjamas',
-       'wasche', 'bademode', 'socken', 'jeans', 'mantel',
-       'krawatten-fliegen-pochetten', 'kopfbedeckungen', 'kleider-sets',
-       'nachtwasche', 'jupe', 'blazer', 'vestons', 'shorts-bermudas',
-       'gurtel', 'handschuhe', 'westen-gilets', 'anzuge', 'poncho-cape',
-       'lederjacken-mantel', 'overalls', 'morgen-bademantel',
-       'lederjacken-ledermantel', 'shapewear']
+       'shirts-tops-sweats', 'kleider']
 
 fit_types = ['slimfit','regularfit','skinnyfit','loosfit','taperedfit']
 
@@ -64,21 +68,15 @@ def data_clean(df):
                   'season_clean']]
     df_red['features_tmp'] = sel.apply(extFeat, axis=1)
 
-    # Clean overall data frame.
-    df_red = df_red.applymap(lambda s: s.lower() if type(s) == str else s)
-    df_red = df_red.applymap(lambda s: s.replace('ä', 'a') if type(s) == str
-                             else s)
-    df_red = df_red.applymap(lambda s: s.replace('ö', 'o') if type(s) == str
-                             else s)
-    df_red = df_red.applymap(lambda s: s.replace('ü', 'u') if type(s) == str
-                             else s)
-    df_red = df_red.applymap(lambda s: re.sub(r'[^a-z0-9]', '', s)
-        if type(s) == str else s)
-
     # Get clean hierarchy.
     df_red['hierarchy_clean'] = df_red['hierarchy_1'] + '/' + df_red[
         'hierarchy_2'] + '/' + df_red['descr_clean'] + '/' + df_red[
         'globus_id'].apply(str)
+
+    # Clean overall data frame.
+    df_red.loc[:, df_red.columns != 'hierarchy_clean'] = \
+        df_red.loc[:, df_red.columns != 'hierarchy_clean'].applymap(
+            lambda x: cleanDf(x))
 
     # Get list of features that occur less then 10 times.
     lst_feat_rare = listRareFeat(df_red['features_tmp'].to_frame())
@@ -101,27 +99,63 @@ def data_clean(df):
     return df_red, df_red_sel, train_val, test
 
 
-def listRareFeat(df):
+def cleanDf(x):
+    '''
+    Method to clean a string from 'umlaute' as well as special characters.
+    '''
 
+    # Check whether it is a string. Otherwise,
+    # return without modification.
+    if isinstance(x, str):
+        # Clean the string.
+        s = x.lower()
+        s = s.replace('ä', 'a')
+        s = s.replace('ö', 'o')
+        s = s.replace('ü', 'u')
+        s = re.sub(r'[^a-z0-9]', '', s)
+
+        return s
+
+    else:
+        return x
+
+
+def listRareFeat(df):
+    '''
+    Method to only keep the features that are found at least a minimum
+    number of times.
+    '''
+
+    # Append all lists in the column.
     whole_lst = [i for s in df['features_tmp'].tolist() for i in s]
 
+    # Count the number of occurence and sort according to the number of
+    # times a feature occurs.
     count_sort = Counter(whole_lst).most_common()
 
-    rare = [t[0] for t in count_sort if t[1] < 10]
+    # Only select the ones that occur a minimum number of times.
+    rare = [t[0] for t in count_sort if t[1] < 1000]
 
-    rare_cl = cleanFeat(rare)
+    # Clean the list of non-rare features.
+    rare = cleanFeat(rare)
 
-    return rare_cl
+    return rare
 
 
 def cleanSeas(x):
+    '''
+    Method to transform the season letter into a word.
+    '''
 
+    # W = 'winter'.
     if x == 'W':
         s = 'winter'
 
+    # S = 'sommer'.
     elif x == 'S':
         s = 'sommer'
 
+    # B = 'beidesaison'.
     elif x == 'B':
         s = 'beidesaison'
 
@@ -132,25 +166,36 @@ def cleanSeas(x):
 
 
 def cleanFeat(x, rare=None):
+    '''
+    Method to clean the features.
+    '''
 
+    # Initiate an empty list.
     feat_c = []
 
+    # Loop over all the features in the list.
     for f in x:
+        # Get rid ot the 'pim-', if present.
         if 'pim-' in f:
             f_c = re.sub('pim-', '', f)
         else:
             f_c = f
 
+        # Get rid of 'umlaute' and special charactrers.
         f_c = f_c.replace('ä', 'a').replace('ö', 'o').replace('ü', 'u')
         f_c = re.sub(r'[^a-zA-Z0-9]', '', f_c).lower()
 
+        # Correctly spell 'mantel'.
         if 'mntel' in f_c:
             f_c = f_c.replace('mntel', 'mantel')
 
+        # Append the features to the list.
         feat_c.append(f_c)
 
+    # Make the list of features unique.
     feat_c = list(set(feat_c))
 
+    # Remove the rare features, if provided.
     if rare is not None:
         feat_c_exr = [t for t in feat_c if t not in rare]
         return feat_c_exr
@@ -159,11 +204,18 @@ def cleanFeat(x, rare=None):
 
 
 def descFeat(row):
+    '''
+    Method to remove features that are in the description or where the
+    description is in the features.
+    '''
 
+    # Initiate an empty list.
     feat_c = []
 
+    # Loop through the features.
     for f in row['features_tmp_2']:
 
+        # Only do this check for features that a longer than three characters.
         if len(f) > 3:
             if not row['descr_clean'] in f and not f in row['descr_clean']:
                 feat_c.append(f)
@@ -174,21 +226,30 @@ def descFeat(row):
 
 
 def extFeat(row):
+    '''
+    Method to add content of columns to the list of features.
+    '''
 
+    # Define the list of features.
     feat = row['features']
 
+    # Add pattern to features, if available.
     if not pd.isna(row['pattern']):
         feat.append(row['pattern'])
 
+    # Add the fit-type to features, if available.
     if not pd.isna(row['fit']):
         feat.append(row['fit'])
 
+    # Add 'bugelfrei' to the features, if available.
     if not pd.isna(row['bugelfrei']):
         feat.append(row['bugelfrei'])
 
+    # Add the color to the features, if available.
     if not pd.isna(row['color_clean']):
         feat.append(row['color_clean'])
 
+    # Add the season to the features, if available.
     if not pd.isna(row['season_clean']):
         feat.append(row['season_clean'])
 
@@ -196,42 +257,75 @@ def extFeat(row):
 
 
 def patFromCol(x):
+    '''
+    Method to extract the pattern from color.
+    '''
 
+    # Check whether the color contains on of
+    # the specified patterns. If not, return
+    # NaNs.
     for p in pat:
        if p in x:
+
            return p
+
     return np.nan
 
 
 def cleanCol(x):
+    '''
+    Method to remove pattern (see above) from
+    the colors.
+    '''
 
+    # If a pattern is in the color, delete it.
     for p in pat:
        if p in x:
            x = x.replace(p, '')
+
     return x
 
 
 def delFit(x):
+    '''
+    Method to delete the fit-type (see below) and other keywords
+    from the string provided.
+    '''
 
+    # If the one of the keywords is in the string provided,
+    # remove the keyword.
     for s in fit_types  + ['bugelfrei', 'ausseide', '3fur2']:
        if s in x:
            x = x.replace(s, '')
+
     return x
 
 
 def findFit(x):
+    '''
+    Method to find the fit-type in the string provided.
+    '''
 
+    # For every fit_type specified, collect it if in string.
     for s in fit_types:
        if s in x:
+
            return s
+
     return np.nan
 
 
 def findBugel(x):
+    '''
+    Method to find 'bugelfrei' in the string provided.
+    '''
 
+    # If 'bugelfrei' in string, collect it.
     for s in ['bugelfrei']:
        if s in x:
+
            return s
+
     return np.nan
 
 

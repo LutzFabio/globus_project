@@ -25,6 +25,7 @@ from tensorflow.keras.preprocessing.image import img_to_array
 from tensorflow.keras.optimizers import Adam, RMSprop, Adadelta, Adagrad, \
   Adamax, Nadam
 from tensorflow.keras.models import model_from_json
+from tensorflow.keras.callbacks import ModelCheckpoint, CSVLogger
 
 
 class GlobusCNN:
@@ -34,41 +35,44 @@ class GlobusCNN:
     '''
 
     # Settings.
-    im_resc =             1.0 / 255
-    rot_range =           180
-    width_shift =         0.1
-    height_shift =        0.1
-    shear_rng =           0.1
-    zoom_rng =            [0.9, 1.5]
-    hor_flip =            True
-    vert_flip =           True
-    fill_mod =            'nearest'
-    batch_size_train =    10
-    batch_size_test =     3
-    meta_file =           '/home/fabiolutz/propulsion/globus_project/' \
-                          'd_data_cleaning/meta_clean_red_train.csv'
-    path_images =         '/home/fabiolutz/propulsion/globus_project/' \
-                          'e_model/images_small_new/'
-    # meta_file =           '/home/ubuntu/efs/meta_clean_red_train.csv'
-    # path_images =         '/home/ubuntu/efs/images_small_new/'
-    sample_size =         200
-    test_size =           0.2
-    rand_state=           200
-    model_str =           'ResNet50'
-    model_input=          (224, 224, 3)
-    layer_old =           'conv5_block3_out'
-    layer_old_train =     None # 'conv5_block3'
-    activation_dense =    'relu'
-    size_dense =          1024
-    size_output =         1
-    dropout =             0.2
-    activation_last =     'sigmoid'
-    optimizer_str =       'Adam'
-    learning_rate =       0.01
-    loss =                'categorical_crossentropy'
-    metrics =             ['categorical_accuracy']
-    epochs =              2
-    epoch_steps =         2
+    im_resc =              1.0 / 255
+    rot_range =            180
+    width_shift =          0.1
+    height_shift =         0.1
+    shear_rng =            0.1
+    zoom_rng =             [0.9, 1.5]
+    hor_flip =             True
+    vert_flip =            True
+    fill_mod =             'nearest'
+    batch_size_train =     16
+    batch_size_test =      8
+    # meta_file =            '/home/fabiolutz/propulsion/globus_project/' \
+    #                        'd_data_cleaning/meta_clean_red_train.csv'
+    # path_images =          '/home/fabiolutz/propulsion/globus_project/' \
+    #                        'e_model/images_small_new/'
+    meta_file =            '/home/ubuntu/efs/meta_clean_red_train.csv'
+    path_images =          '/home/ubuntu/efs/images_small_new/'
+    output_dir =           './output_glob/'
+    sample_size =          'all'
+    test_size =            0.2
+    rand_state=            200
+    model_str =            'ResNet50'
+    model_input=           (224, 224, 3)
+    layer_old =            'conv5_block3_out'
+    layer_old_train =      None # 'conv5_block3'
+    activation_dense =     'relu'
+    size_dense =           1024
+    size_output =          1
+    dropout =              0.2
+    activation_last_cat =  'sigmoid'
+    activation_last_feat = 'sigmoid'
+    optimizer_str =        'Adam'
+    learning_rate =        0.01
+    loss =                 {'category': 'binary_crossentropy',
+                            'feature': 'binary_crossentropy'}
+    metrics =              ['accuracy']
+    epochs =               3
+    batch_steps =          200
 
 
     def __init__(self, load=False):
@@ -91,6 +95,19 @@ class GlobusCNN:
 
         else:
             raise ValueError('Optimizer not implemented yet!')
+
+        # Initiate the CSV logger.
+        self.csv_logger = CSVLogger(self.output_dir + 'training_{}.log'.format(
+            time.strftime("%Y%m%d-%H%M%S")), separator=',', append=False)
+
+        # Initiate the Checkpoint logger.
+        self.cat_cp_logger = ModelCheckpoint(
+            self.output_dir + 'best_cat_model.hdf5', save_best_only=True,
+            monitor='val_category_' + self.metrics[0], mode='max')
+
+        self.feat_cp_logger = ModelCheckpoint(
+            self.output_dir + 'best_feat_model.hdf5', save_best_only=True,
+            monitor='val_feature_' + self.metrics[0], mode='max')
 
         # Define whether to train or to load a model and evaluate it.
         if not load:
@@ -115,13 +132,14 @@ class GlobusCNN:
             self.model = loaded_model
 
             # Augment the images.
-            self.augment_images()
+            self.train_gen, self.test_gen = self.create_generators()
 
             # Compile the model.
             loaded_model.compile(optimizer=self.optimizer,
                                  loss=self.loss,
                                  metrics=self.metrics)
-            self.model_new = loaded_model
+            self.model_loaded = loaded_model
+            self.model_loaded_hist = pd.read_csv(self.latest_log())
 
             # Evaluate.
             self.evaluate_load()
@@ -134,23 +152,25 @@ class GlobusCNN:
         '''
 
         # Augment the pictures.
-        self.train_gen_cat, self.test_gen_cat, self.train_gen_feat, \
-        self.test_gen_feat = self.augment_images()
+        self.train_gen, self.test_gen = self.create_generators()
 
-        # Create new model.
-        self.model_cat = self.create_new_model()
+        # Create extended model.
+        self.model_ext = self.create_new_model()
 
         # Compile the model.
-        self.model_cat.compile(optimizer=self.optimizer,
+        self.model_ext.compile(optimizer=self.optimizer,
                                loss=self.loss,
                                metrics=self.metrics)
 
         # Train the model.
-        self.model_trained = self.model_cat.fit_generator(
+        self.model_trained = self.model_ext.fit_generator(
             generator=self.train_gen, epochs=self.epochs,
-            steps_per_epoch=self.epoch_steps, validation_data=self.test_gen,
-            class_weight=self.class_wgt(self.train_gen.classes),
-            validation_steps=self.steps_test())
+            validation_data=self.test_gen,
+            steps_per_epoch=self.steps_train(),
+            validation_steps=self.steps_test(),
+            callbacks=[self.csv_logger, self.cat_cp_logger,
+                       self.feat_cp_logger],
+            use_multiprocessing=True)
 
         return
 
@@ -160,14 +180,14 @@ class GlobusCNN:
         Method to evaluate the trained model.
         '''
 
+        # Save model.
+        self.save_model_train()
+
         # Plot and save an image of the accuracy to the output folder.
-        self.plot_result(self.model_trained)
+        self.plot_result_train()
 
         # Save the accuracy in a text file.
-        self.save_accuracy(self.model_new)
-
-        # Save model.
-        self.save_model(self.model_new)
+        self.save_accuracy_train()
 
         return
 
@@ -178,18 +198,33 @@ class GlobusCNN:
         '''
 
         # Save the accuracy in a text file.
-        self.save_accuracy(self.model_new)
+        self.save_accuracy_load()
+
+        # Plot and save an image of the accuracy to the output folder.
+        self.plot_result_load()
 
         return
 
 
     def latest_h5(self):
         '''
-        Method to the the path of the latest HDF5 weight file.
+        Method to get the path of the latest HDF5 weight file.
         '''
 
         # Get latest HDF5 file from output folder.
-        lst_files = glob.glob('./output_hier/*.h5')
+        lst_files = glob.glob(self.output_dir + '*.h5')
+        latest = max(lst_files, key=os.path.getctime)
+
+        return latest
+
+
+    def latest_log(self):
+        '''
+        Method to get the path of the latest logger file.
+        '''
+
+        # Get latest logger file from output folder.
+        lst_files = glob.glob(self.output_dir + '*.log')
         latest = max(lst_files, key=os.path.getctime)
 
         return latest
@@ -201,7 +236,7 @@ class GlobusCNN:
         '''
 
         # Get latest JSON file from output folder.
-        lst_files = glob.glob('./output_hier/*.json')
+        lst_files = glob.glob(self.output_dir + '*.json')
         latest = max(lst_files, key=os.path.getctime)
 
         # Open, assign and close the JSON file.
@@ -212,25 +247,34 @@ class GlobusCNN:
         return j_model
 
 
+    def steps_train(self):
+        '''
+        Method to calculate the test steps.
+        '''
+
+        # Check if a number of batch steps is set. If not, calculate the
+        # number.
+        if self.batch_steps is None:
+            bs = self.len_train_df / self.batch_size_train
+        else:
+            bs = self.batch_steps
+
+        return bs
+
+
     def steps_test(self):
         '''
         Method to calculate the test steps.
         '''
 
-        return self.test_gen.n / self.batch_size_test
+        # Check if a number of batch steps is set. If not, calculate the
+        # number.
+        if self.batch_steps is None:
+            bs = self.len_test_df / self.batch_size_test
+        else:
+            bs = self.batch_steps
 
-
-    def class_wgt(self, classes):
-        '''
-        Method to calculate the class weights, such that imbalanced classes
-        could be handled.
-        '''
-
-        wgt = compute_class_weight(class_weight='balanced',
-                                   classes=np.unique(classes),
-                                   y=classes)
-
-        return wgt
+        return bs
 
 
     def create_new_model(self):
@@ -253,84 +297,118 @@ class GlobusCNN:
         flat_cat = Flatten()(self.model.outputs[0])
         class_cat = Dense(self.size_dense,
                           activation=self.activation_dense)(flat_cat)
-        output_cat = Dense(len(np.unique(self.train_gen_cat.classes)),
+        output_cat = Dense(self.len_cat_uq,
                            activation=self.activation_dense)(class_cat)
-        activ_cat = Activation(self.activation_last)(output_cat)
+        activ_cat = Activation(self.activation_last_cat,
+                               name='category')(output_cat)
 
         # Create the feature model.
         flat_feat = Flatten()(self.model.outputs[0])
         class_feat = Dense(self.size_dense,
                           activation=self.activation_dense)(flat_feat)
-        output_feat = Dense(len(np.unique(self.train_gen_feat.classes)),
+        output_feat = Dense(self.len_feat_uq,
                            activation=self.activation_dense)(class_feat)
-        activ_feat = Activation(self.activation_last)(output_feat)
+        activ_feat = Activation(self.activation_last_feat,
+                                name='feature')(output_feat)
 
         # Combine the model.
-        model = Model(inputs=self.model.inputs,
+        model = Model(inputs=self.model.input,
                       outputs=[activ_cat, activ_feat])
 
         return model
 
 
-    def augment_images(self):
+    def create_generators(self):
         '''
-        Method that takes care of the image augmentation.
+        Method that creates the ImageDataGenerators and everything that is
+        needed in this regard.
+        '''
+
+        # Get images for train and test.
+        self.train_df, self.test_df = self.get_image_dfs()
+
+        # Initiate the train and test ImageDataGenerator.
+        train_gen_init = ImageDataGenerator(
+            rescale=self.im_resc,
+            rotation_range=self.rot_range,
+            width_shift_range=self.width_shift,
+            height_shift_range=self.height_shift,
+            shear_range=self.shear_rng,
+            zoom_range=self.zoom_rng,
+            horizontal_flip=self.hor_flip,
+            vertical_flip=self.vert_flip,
+            fill_mode=self.fill_mod)
+
+        test_gen_init = ImageDataGenerator(
+            rescale=self.im_resc)
+
+        # Construct the train and test generators.
+        train_gen = self.combine_generators(train_gen_init, self.train_df)
+        test_gen = self.combine_generators(test_gen_init, self.test_df)
+
+        # Define unique features.
+        self.len_train_df = self.train_df.shape[0]
+        self.len_test_df = self.test_df.shape[0]
+
+        # TODO: Temporary - remove again later!
+        # Temporary generators in order to get the size of the encoded arrays.
+        gen_cat = train_gen_init.flow_from_dataframe(
+            self.train_df, batch_size=self.batch_size_train,
+            x_col='img_path', y_col='img_class', target_size=(224, 224),
+            shuffle=True, class_mode='categorical', seed=self.rand_state)
+
+        gen_feat = train_gen_init.flow_from_dataframe(
+            self.train_df, batch_size=self.batch_size_train,
+            x_col='img_path', y_col='features_clean', target_size=(224, 224),
+            shuffle=True, class_mode='categorical', seed=self.rand_state)
+
+        self.len_cat_uq = len(gen_cat[0][1][0])
+        self.len_feat_uq = len(gen_feat[0][1][0])
+
+
+        return train_gen, test_gen
+
+
+    def combine_generators(self, gen_init, df):
+        '''
+        Generator that is later fed into the 'fit_generator' method of the 
+        network to be trained.
+
+        Source: https://stackoverflow.com/questions/38972380/keras-how-to-
+        use-fit-generator-with-multiple-outputs-of-different-type/41872896
         '''
 
         # Get image dimensions.
         try:
-            im_dims = self.model.layers[0].output_shape[0][1:3]
+            im_dims_tup = self.model.layers[0].output_shape[0][1:3]
         except:
-            im_dims = self.model.layers[0].input_shape[1:3]
+            im_dims_tup = self.model.layers[0].input_shape[1:3]
 
-        # Get images for train and test.
-        self.train_df_cat, self.test_df_cat, self.train_df_feat, \
-        self.test_df_feat  = self.get_image_dfs()
+        # Construct the categorical generator.
+        self.gen_cat = gen_init.flow_from_dataframe(
+            df, batch_size=self.batch_size_train,
+            x_col='img_path', y_col='img_class', target_size=im_dims_tup,
+            shuffle=True, class_mode='categorical', seed=self.rand_state)
 
-        # Initiate the train ImageDataGenerator.
-        gen_train_data = ImageDataGenerator(
-            rescale=self.im_resc,
-            rotation_range=self.rot_range)
-            # width_shift_range=self.width_shift,
-            # height_shift_range=self.height_shift,
-            # shear_range=self.shear_rng,
-            # zoom_range=self.zoom_rng,
-            # horizontal_flip=self.hor_flip,
-            # vertical_flip=self.vert_flip,
-            # fill_mode=self.fill_mod)
+        # Construct the feature generator.
+        self.gen_feat = gen_init.flow_from_dataframe(
+            df, batch_size=self.batch_size_train,
+            x_col='img_path', y_col='features_clean', target_size=im_dims_tup,
+            shuffle=True, class_mode='categorical', seed=self.rand_state)
 
-        # Inititate the train generators.
-        gen_train_cat = gen_train_data.flow_from_dataframe(
-            self.train_df_cat, batch_size=self.batch_size_train,
-            x_col='img_path', y_col='img_class', target_size=im_dims,
-            shuffle=True)
-            #save_to_dir=self.path_images + 'augmented/',
-            #save_format='png')
+        # Build a while loop to construct the generator.
+        while True:
 
-        gen_train_feat = gen_train_data.flow_from_dataframe(
-            self.train_df_feat, batch_size=self.batch_size_train,
-            x_col='img_path', y_col='features_clean', target_size=im_dims,
-            shuffle=True)
-            #save_to_dir=self.path_images + 'augmented/',
-            #save_format='png')
+            # Go to the next batch.
+            x_tmp = next(self.gen_cat)
+            y_tmp = next(self.gen_feat)
 
-        # Initiate the test ImageDataGenerator.
-        gen_test_data = ImageDataGenerator(
-            rescale=self.im_resc)
+            # Assign the encoded arrays to variables that are then yielded.
+            x = x_tmp[0]
+            y_1 = x_tmp[1]
+            y_2 = y_tmp[1]
 
-        # Inititate the train generators.
-        gen_test_cat = gen_test_data.flow_from_dataframe(
-            self.test_df_cat, batch_size=self.batch_size_test,
-            x_col='img_path', y_col='img_class', target_size=im_dims,
-            shuffle=False)
-
-        gen_test_feat = gen_test_data.flow_from_dataframe(
-            self.test_df_feat, batch_size=self.batch_size_test,
-            x_col='img_path', y_col='features_clean', target_size=im_dims,
-            shuffle=False)
-
-        return gen_train_cat, gen_test_cat, \
-               gen_train_feat, gen_test_feat
+            yield x, [y_1, y_2]
 
 
     def get_image_dfs(self):
@@ -351,171 +429,120 @@ class GlobusCNN:
 
         # Add a column with image classification.
         df_tmp['img_class'] = df_tmp['hierarchy_clean'].apply(
-            os.path.dirname).str.replace('/', '_')
+            os.path.dirname).str.replace('/', '_').str.replace('-', '')
 
         # Only select the needed columns.
-        df_sel_cat = df_tmp[['img_class', 'img_path']]
-        df_sel_feat = df_tmp[['features_clean', 'img_path']]
+        df_sel = df_tmp[['img_path', 'img_class', 'features_clean']]
+        
+        # Get train and test data.
+        train_df, test_df = self.tt_split(df_sel)
 
-        # Get train-test split.
-        train_df_cat, test_df_cat = self.tt_split_cat(df_sel_cat,
-                                                      'img_class')
-        train_df_feat, test_df_feat = self.tt_split_feat(df_sel_feat,
-                                                         'features_clean')
-
-        return train_df_cat, test_df_cat, \
-               train_df_feat, test_df_feat
+        return train_df, test_df
 
 
-    def tt_split_feat(self, df, col):
-        '''
-        Method that does a manual train-test split since the sklearn
-        train-test split does not make sure that all features are included
-        in the train and test set.
-        '''
+    def tt_split(self, df):
 
         # Convert string of list to proper list.
-        df[col] = df[col].apply(literal_eval)
+        df['features_clean'] = df['features_clean'].apply(literal_eval)
 
-        # Get list of unique features.
-        lst_uq = list(set([i for s in df[col].tolist() for i in s]))
+        # Get the unique classifications and features.
+        lst_cls_uq = df['img_class'].unique()
+        lst_feat_uq = list(set([i for s in df['features_clean'].tolist() for i
+                                in s]))
 
-        # Set empty lists.
-        lst_train = []
-        lst_test = []
+        # Obtain the list lengths.
+        len_lst_cls_uq = len(lst_cls_uq)
+        len_lst_feat_uq = len(lst_feat_uq)
 
-        # Get a working copy of the data frame.
-        df_w = df.copy()
+        # Do an initial train-test split.
+        train_df, test_df = train_test_split(df, test_size=0.3)
 
-        # Loop over the unique features.
-        for f in lst_uq:
+        # Define the unique categories and features of the train and test
+        # data frame.
+        len_cls_uq_tr = len(train_df['img_class'].unique())
+        len_feat_uq_tr = len(list(set([i for s in train_df[
+            'features_clean'].tolist() for i in s])))
 
-            # Get the temporary data frame of rows that contain the feature.
-            mask = df_w[col].apply(lambda x: f in x)
-            df_tmp = df_w[mask]
+        len_cls_uq_te = len(test_df['img_class'].unique())
+        len_feat_uq_te = len(list(set([i for s in test_df[
+            'features_clean'].tolist() for i in s])))
 
-            # Get the train-test indexes for the temporary data frame.
-            tr_idx, te_idx = self.tt_idx(df_tmp)
+        # Initiate a variable to handle the number of iterations.
+        n_iter = 0
 
-            # Add it to the existing lists.
-            lst_train = lst_train + tr_idx
-            lst_test = lst_test + te_idx
+        # Make a while loops that splits the data frame into train and test
+        # data as long as the classifications and/or features are missing in
+        # either train or test data. The while loop is capped at 500
+        # iterations in order to protect the loop for looping infinitely.
+        while len_cls_uq_tr != len_lst_cls_uq or len_feat_uq_tr !=  \
+                len_lst_feat_uq or len_cls_uq_te != len_lst_cls_uq or  \
+                len_feat_uq_te != len_lst_feat_uq:
 
-            # Exclude the rows that were already assigned.
-            df_w = df_w[~df_w.index.isin(tr_idx)]
-            df_w = df_w[~df_w.index.isin(te_idx)]
+            # Make the loop break if the number of iterations is larger than
+            # 500.
+            if n_iter > 500:
+                raise StopIteration('No valid train-test split found!')
 
-        # Make both lists unique.
-        lst_train_uq = list(set(lst_train))
-        lst_test_uq = list(set(lst_test))
+            # Do a random train-test split without seed.
+            train_df, test_df = train_test_split(df, test_size=0.3)
 
-        # Use the unique lists to select the data frames.
-        df_train = df[df.index.isin(lst_train_uq)]
-        df_test = df[df.index.isin(lst_test_uq)]
+            # Define the unique categories and features of the train and
+            # test data frame.
+            len_cls_uq_tr = len(train_df['img_class'].unique())
+            len_feat_uq_tr = len(list(set([i for s in train_df[
+                'features_clean'].tolist() for i in s])))
 
-        return df_train, df_test
+            len_cls_uq_te = len(test_df['img_class'].unique())
+            len_feat_uq_te = len(list(set([i for s in test_df[
+                'features_clean'].tolist() for i in s])))
+
+            # Add one to n.
+            n_iter += 1
+
+        print('Optimal train-test split found after {} '
+              'iterations.'.format(n_iter))
+        return train_df, test_df
 
 
-    def tt_split_cat(self, df, col):
+    def plot_result_load(self):
         '''
-        Method that does a manual train-test split since the sklearn
-        train-test split does not make sure that all categories are included
-        in the train and test set.
-        '''
-
-        # Get a list of unique classes.
-        lst_uq = df[col].unique()
-
-        # Set empty lists.
-        lst_train = []
-        lst_test = []
-
-        # Loop through every item in unique list.
-        for c in lst_uq:
-
-            # Define temporary data frame.
-            df_tmp = df[df[col] == c]
-
-            # Get the train-test indexes for the temporary data frame.
-            tr_idx, te_idx = self.tt_idx(df_tmp)
-
-            # Add it to the existing lists.
-            lst_train = lst_train + tr_idx
-            lst_test = lst_test + te_idx
-
-        # Use the lists to select the data frames.
-        df_train = df[df.index.isin(lst_train)]
-        df_test = df[df.index.isin(lst_test)]
-
-        return df_train, df_test
-
-
-    def tt_idx(self, df_tmp):
-        '''
-        Method that returns list of indexes for train and test data for the
-        respective temporary index.
-        '''
-
-        if df_tmp.shape[0] > 5:
-
-            # Set seed.
-            np.random.seed(self.rand_state)
-
-            # Generate random 0 and 1 in the length of cont.
-            split_train = list(np.random.rand(df_tmp.shape[0]) >=
-                               self.test_size)
-            split_test = [not i for i in split_train]
-
-            # Get the train list.
-            lst_tr = list(compress(df_tmp.index, split_train))
-
-            # Get the test list.
-            lst_te = list(compress(df_tmp.index, split_test))
-
-            return lst_tr, lst_te
-
-        elif df_tmp.shape[0] <= 5 and df_tmp.shape[0] > 1:
-
-            # Define ratio.
-            rat = math.ceil(df_tmp.shape[0] / 2.0)
-
-            # Get the train list.
-            lst_tr = list(np.random.choice(list(df_tmp.index), rat,
-                                           replace=False))
-
-            # Get the test list.
-            lst_te = [i for i in list(df_tmp.index) if i not in
-                      lst_tr]
-
-            return lst_tr, lst_te
-
-        else:
-            return list(df_tmp.index), list(df_tmp.index)
-
-
-    def plot_result(self, res):
-        '''
-        Method to plot the accuracy and the loss of the training steps.
+        Method to plot the results from a loaded model.
         '''
 
         # Get the accuracy and the loss.
-        acc = res.history[self.metrics[0]]
-        loss = res.history['loss']
+        cat_acc = self.model_loaded_hist['category_' + self.metrics[0]]
+        feat_acc = self.model_loaded_hist['feature_' + self.metrics[0]]
+        cat_loss = self.model_loaded_hist['category_loss']
+        feat_loss = self.model_loaded_hist['feature_loss']
 
         # Get the accuracy and the loss for the validation-set.
-        acc_val = res.history[['val_' + v for v in self.metrics][0]]
-        loss_val = res.history['val_loss']
+        cat_val_acc = self.model_loaded_hist['val_category_' + self.metrics[0]]
+        feat_val_acc = self.model_loaded_hist['val_feature_' + self.metrics[0]]
+        cat_val_loss = self.model_loaded_hist['val_category_loss']
+        feat_val_loss = self.model_loaded_hist['val_feature_loss']
 
         # Plot.
-        plt.plot(acc, linestyle='-', color='b', label='Training Acc.')
-        plt.plot(loss, 'o', color='b', label='Training Loss')
-        plt.plot(acc_val, linestyle='--', color='r', label='Validation Acc.')
-        plt.plot(loss_val, 'o', color='r', label='Validation Loss')
+        plt.plot(cat_acc, linestyle='-', color='cornflowerblue',
+                 label='Categorical training acc.')
+        plt.plot(feat_acc, linestyle='-', color='limegreen',
+                 label='Feature training acc.')
+        plt.plot(cat_loss, linestyle='--', color='lightcoral',
+                 label='Categorical training Loss')
+        plt.plot(feat_loss, linestyle='--', color='sandybrown',
+                 label='Feature training Loss')
+        plt.plot(cat_val_acc, linestyle='-', marker='o', color='blue',
+                 label='Categorical validation acc.')
+        plt.plot(feat_val_acc, linestyle='-', marker='o', color='darkgreen',
+                 label='Feature validation acc.')
+        plt.plot(cat_val_loss, linestyle='--', marker='o', color='red',
+                 label='Categorical validation loss')
+        plt.plot(feat_val_loss, linestyle='--', marker='o', color='darkorange',
+                 label='Feature validation loss')
         plt.title('Training and Validation Accuracy')
         plt.legend()
 
         # Save.
-        plt.savefig('./output_hier/accuracy_plot_{}.png'.format(
+        plt.savefig(self.output_dir + 'accuracy_plot_{}.png'.format(
             time.strftime("%Y%m%d-%H%M%S")))
 
         # Close figure.
@@ -524,25 +551,77 @@ class GlobusCNN:
         return
 
 
-    def save_accuracy(self, res):
+    def plot_result_train(self):
         '''
-        Method to get the accuracy and loss and write it into a text file.
+        Method to plot the results of the trained model.
         '''
 
-        # Get the accuracy and loss.
-        result = res.evaluate_generator(self.test_gen,
-                                        steps=self.steps_test())
+        # Get the accuracy and the loss.
+        cat_acc = self.model_trained.history['category_' + self.metrics[0]]
+        feat_acc = self.model_trained.history['feature_' + self.metrics[0]]
+        cat_loss = self.model_trained.history['category_loss']
+        feat_loss = self.model_trained.history['feature_loss']
+
+        # Get the accuracy and the loss for the validation-set.
+        cat_val_acc = self.model_trained.history['val_category_' +
+                                                 self.metrics[0]]
+        feat_val_acc = self.model_trained.history['val_feature_' +
+                                                  self.metrics[0]]
+        cat_val_loss = self.model_trained.history['val_category_loss']
+        feat_val_loss = self.model_trained.history['val_feature_loss']
+
+        # Plot.
+        plt.plot(cat_acc, linestyle='-', color='cornflowerblue',
+                 label='Categorical training acc.')
+        plt.plot(feat_acc, linestyle='-', color='limegreen',
+                 label='Feature training acc.')
+        plt.plot(cat_loss, linestyle='--', color='lightcoral',
+                 label='Categorical training Loss')
+        plt.plot(feat_loss, linestyle='--', color='sandybrown',
+                 label='Feature training Loss')
+        plt.plot(cat_val_acc, linestyle='-', marker='o', color='blue',
+                 label='Categorical validation acc.')
+        plt.plot(feat_val_acc, linestyle='-', marker='o', color='darkgreen',
+                 label='Categorical validation acc.')
+        plt.plot(cat_val_loss, linestyle='--', marker='o', color='red',
+                 label='Categorical validation loss')
+        plt.plot(feat_val_loss, linestyle='--', marker='o', color='darkorange',
+                 label='Feature validation loss')
+        plt.title('Training and Validation Accuracy')
+        plt.legend()
+
+        # Save.
+        plt.savefig(self.output_dir + 'accuracy_plot_{}.png'.format(
+            time.strftime("%Y%m%d-%H%M%S")))
+
+        # Close figure.
+        plt.close()
+
+        return
+
+
+    def save_accuracy_load(self):
+        '''
+        Method to get the accuracy and loss of a loaded model and write it
+        into a text file.
+        '''
+
+        # Get the last row of the history and transpose it.
+        df_last_row = self.model_loaded_hist.iloc[-1].T
 
         # Define a filename.
-        f_name = './output_hier/accuracy_{}.txt'.format(time.strftime(
+        f_name = self.output_dir + 'accuracy_{}.txt'.format(time.strftime(
             "%Y%m%d-%H%M%S"))
 
         # Open file.
         f = open(f_name, 'w+')
 
         # Write content.
-        f.write('{}: {}\r\n'.format(res.metrics_names[0], result[0]))
-        f.write('{}: {}%\r\n'.format(res.metrics_names[1], result[1]))
+        for i, r in df_last_row.iteritems():
+            if 'accuracy' in i:
+                f.write('{}: {}%\r\n'.format(i, r * 100))
+            else:
+                f.write('{}: {}\r\n'.format(i, r))
 
         # Close file.
         f.close()
@@ -550,23 +629,52 @@ class GlobusCNN:
         return
 
 
-    def save_model(self, res):
+    def save_accuracy_train(self):
+        '''
+        Method to get the accuracy and loss of the trained model and write it
+        into a text file.
+        '''
+
+        # Get the accuracy and loss.
+        result = self.model_ext.evaluate_generator(self.test_gen,
+                                                   steps=self.steps_test())
+
+        # Define a filename.
+        f_name = self.output_dir + 'accuracy_{}.txt'.format(time.strftime(
+            "%Y%m%d-%H%M%S"))
+
+        # Open file.
+        f = open(f_name, 'w+')
+
+        # Write content.
+        f.write('{}: {}\r\n'.format(self.model_ext.metrics_names[0],
+                                    result[0]))
+        f.write('{}: {}%\r\n'.format(self.model_ext.metrics_names[1],
+                                     result[1]))
+
+        # Close file.
+        f.close()
+
+        return
+
+
+    def save_model_train(self):
         '''
         Method to save the model into JSON and the weight into HDF5 files.
         '''
 
         # Define JSON and HDF5 file names.
-        f_mod = './output_hier/model_{}.json'.format(time.strftime(
+        f_mod = self.output_dir + 'model_{}.json'.format(time.strftime(
             "%Y%m%d-%H%M%S"))
-        f_wgt = './output_hier/weights_{}.h5'.format(time.strftime(
+        f_wgt = self.output_dir + 'weights_{}.h5'.format(time.strftime(
             "%Y%m%d-%H%M%S"))
 
         # Save model.
         with open(f_mod, "w") as json_file:
-            json_file.write(res.to_json())
+            json_file.write(self.model_ext.to_json())
 
         # Save weights.
-        res.save_weights(f_wgt)
+        self.model_ext.save_weights(f_wgt)
 
         return
 
@@ -574,4 +682,4 @@ class GlobusCNN:
 if __name__ == '__main__':
 
     # Get the training done.
-    cnn = GlobusCNN()
+    cnn = GlobusCNN(load=False)
