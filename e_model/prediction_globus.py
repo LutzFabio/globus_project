@@ -4,6 +4,7 @@ import glob
 import os
 import cv2
 from PIL import Image
+import matplotlib.pyplot as plt
 
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelBinarizer
@@ -21,6 +22,7 @@ from tensorflow.keras.optimizers import Adam, RMSprop, Adadelta, Adagrad, \
   Adamax, Nadam
 from tensorflow.keras.models import model_from_json
 from tensorflow.keras.callbacks import ModelCheckpoint, CSVLogger
+from tensorflow.keras.preprocessing import image
 
 
 def predict_img(model_path, img_path):
@@ -34,10 +36,77 @@ def predict_img(model_path, img_path):
     # Load the image.
     img = load_img(model.input_shape[1:3], img_path)
 
-    a = 1
+    # Predict the image.
+    pred_cat, pred_feat = get_pred_df(model.predict(img))
 
+    # Plot.
+    plot_img(pred_cat, pred_feat, img)
 
     return
+
+
+def plot_img(pred_cat, pred_feat, img):
+    '''
+    Method to plot the image and the predictions in one.
+    '''
+
+    # Create text string.
+    txt_str = 'Categories:\n {}: {}\n {}: {}\n {}: {}\n {}: {}\n\n ' \
+              'Features:\n {}: {}\n {}: {}\n {}: {}\n {}: {}'.format(
+              pred_cat.index[0], pred_cat.iloc[0][0], pred_cat.index[1],
+              pred_cat.iloc[1][0], pred_cat.index[2], pred_cat.iloc[2][0],
+              pred_cat.index[3], pred_cat.iloc[3][0], pred_feat.index[0],
+              pred_feat.iloc[0][0], pred_feat.index[1], pred_feat.iloc[1][0],
+              pred_feat.index[2], pred_feat.iloc[2][0], pred_feat.index[3],
+              pred_feat.iloc[3][0])
+
+    # Make plot.
+    plt.subplot(1, 2, 1)
+    plt.imshow(img.squeeze())
+    plt.subplot(1, 2, 2)
+    plt.axis("off")
+    plt.text(0.0, 0.3, txt_str)
+    plt.show()
+
+    return
+
+
+def get_pred_df(pred):
+    '''
+    Method to get the predictions and the corresponding classes.
+    '''
+
+    # Get the latest data frames of the categories and features.
+    cat_df = get_latest_csv('categories')
+    feat_df = get_latest_csv('features')
+
+    # Combine the categories with the predictions.
+    pred_cat = pd.DataFrame(index=cat_df['categories'].values, columns=[
+        'prediction'], data=pred[0].squeeze()).sort_values('prediction',
+        ascending=False)
+
+    # Combine the features with the predictions.
+    pred_feat = pd.DataFrame(index=feat_df['features'].values, columns=[
+        'prediction'], data=pred[1].squeeze()).sort_values('prediction',
+        ascending=False)
+
+    return pred_cat, pred_feat
+
+
+def get_latest_csv(kind):
+    '''
+    Method to get the content of the latest CSV saved. The kind is
+    specified by a string.
+    '''
+
+    # Get list of the latest category CSV.
+    lst_files = glob.glob(model_path + '*' + kind + '*.csv')
+    latest_file = max(lst_files, key=os.path.getctime)
+
+    # Read the files.
+    df = pd.read_csv(latest_file).drop(['Unnamed: 0'], axis=1)
+
+    return df
 
 
 def load_img(dims, img_path):
@@ -45,16 +114,16 @@ def load_img(dims, img_path):
     Method to load the image specified as array.
     '''
 
-    # Read the image.
-    img_orig = Image.open(img_path)
+    # Load image and resize.
+    img_orig = image.load_img(img_path, target_size=dims)
 
-    # Resize the image.
-    img_resized = img_orig.resize(dims)
+    # Get the image array.
+    img_array = image.img_to_array(img_orig) / 255
 
-    # Resize the image.
-    img_rsz = cv2.resize(img_orig, dims)
+    # Expand dimensions.
+    img_array_4d = np.expand_dims(img_array, axis=0)
 
-    return
+    return img_array_4d
 
 
 def load_model(model_path):
@@ -104,7 +173,7 @@ if __name__ == '__main__':
 
     # Settings.
     model_path = './output_glob/'
-    img_path = './images_pred/test_1.jpg'
+    img_path = './images_pred/computer.jpeg'
 
     # Get prediction.
     predict_img(model_path, img_path)

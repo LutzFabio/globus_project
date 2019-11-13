@@ -44,17 +44,17 @@ class GlobusCNN:
     hor_flip =             True
     vert_flip =            True
     fill_mod =             'nearest'
-    batch_size_train =     16
-    batch_size_test =      8
-    # meta_file =            '/home/fabiolutz/propulsion/globus_project/' \
-    #                        'd_data_cleaning/meta_clean_red_train.csv'
-    # path_images =          '/home/fabiolutz/propulsion/globus_project/' \
-    #                        'e_model/images_small_new/'
-    meta_file =            '/home/ubuntu/efs/meta_clean_red_train.csv'
-    path_images =          '/home/ubuntu/efs/images_small_new/'
+    batch_size_train =     5
+    batch_size_test =      5
+    meta_file =            '/home/fabiolutz/propulsion/globus_project/' \
+                           'd_data_cleaning/meta_clean_red_train.csv'
+    path_images =          '/home/fabiolutz/propulsion/globus_project/' \
+                           'e_model/images_small_new/'
+    # meta_file =            '/home/ubuntu/efs/meta_clean_red_train.csv'
+    # path_images =          '/home/ubuntu/efs/images_small_new/'
     output_dir =           './output_glob/'
-    sample_size =          'all'
-    test_size =            0.2
+    sample_frac =          'all'
+    test_size =            0.3
     rand_state=            200
     model_str =            'ResNet50'
     model_input=           (224, 224, 3)
@@ -64,15 +64,15 @@ class GlobusCNN:
     size_dense =           1024
     size_output =          1
     dropout =              0.2
-    activation_last_cat =  'sigmoid'
+    activation_last_cat =  'softmax'
     activation_last_feat = 'sigmoid'
     optimizer_str =        'Adam'
-    learning_rate =        0.01
-    loss =                 {'category': 'binary_crossentropy',
+    learning_rate =        0.1
+    loss =                 {'category': 'categorical_crossentropy',
                             'feature': 'binary_crossentropy'}
     metrics =              ['accuracy']
-    epochs =               3
-    batch_steps =          200
+    epochs =               5
+    batch_steps =          5
 
 
     def __init__(self, load=False):
@@ -295,19 +295,19 @@ class GlobusCNN:
 
         # Create the categorical model.
         flat_cat = Flatten()(self.model.outputs[0])
-        class_cat = Dense(self.size_dense,
-                          activation=self.activation_dense)(flat_cat)
+        # class_cat = Dense(self.size_dense,
+        #                   activation=self.activation_dense)(flat_cat)
         output_cat = Dense(self.len_cat_uq,
-                           activation=self.activation_dense)(class_cat)
+                           activation=self.activation_dense)(flat_cat)
         activ_cat = Activation(self.activation_last_cat,
                                name='category')(output_cat)
 
         # Create the feature model.
         flat_feat = Flatten()(self.model.outputs[0])
-        class_feat = Dense(self.size_dense,
-                          activation=self.activation_dense)(flat_feat)
+        # class_feat = Dense(self.size_dense,
+        #                   activation=self.activation_dense)(flat_feat)
         output_feat = Dense(self.len_feat_uq,
-                           activation=self.activation_dense)(class_feat)
+                           activation=self.activation_dense)(flat_feat)
         activ_feat = Activation(self.activation_last_feat,
                                 name='feature')(output_feat)
 
@@ -350,23 +350,55 @@ class GlobusCNN:
         self.len_train_df = self.train_df.shape[0]
         self.len_test_df = self.test_df.shape[0]
 
-        # TODO: Temporary - remove again later!
-        # Temporary generators in order to get the size of the encoded arrays.
+        # Due to the custom generator constructed above, the following
+        # function generates some attributes and save some data to CSV's
+        # that are needed but cannot be derived from the custom generator
+        # anymore.
+        self.get_needed_attr_outp(train_gen_init)
+
+        return train_gen, test_gen
+
+
+    def get_needed_attr_outp(self, train_gen_init):
+        '''
+        Method that generates some attributes that are needed later. This is
+        necessary because a custom ImageDataGenerator had to be created.
+        '''
+
+        # Generate the two train generators.
         gen_cat = train_gen_init.flow_from_dataframe(
             self.train_df, batch_size=self.batch_size_train,
             x_col='img_path', y_col='img_class', target_size=(224, 224),
-            shuffle=True, class_mode='categorical', seed=self.rand_state)
+            shuffle=False, class_mode='categorical', seed=self.rand_state)
 
         gen_feat = train_gen_init.flow_from_dataframe(
             self.train_df, batch_size=self.batch_size_train,
             x_col='img_path', y_col='features_clean', target_size=(224, 224),
-            shuffle=True, class_mode='categorical', seed=self.rand_state)
+            shuffle=False, class_mode='categorical', seed=self.rand_state)
 
-        self.len_cat_uq = len(gen_cat[0][1][0])
-        self.len_feat_uq = len(gen_feat[0][1][0])
+        # Get the length of the class indices (unique categories and features).
+        self.len_cat_uq = len(gen_cat.class_indices)
+        self.len_feat_uq = len(gen_feat.class_indices)
 
+        # Get data frames with the categories and features, according to the
+        # encoding in the generator.
+        df_cat = pd.DataFrame.from_dict(gen_cat.class_indices,
+            orient='index', columns=['encoding']).reset_index().rename(
+            columns={'index': 'categories'})
 
-        return train_gen, test_gen
+        df_feat = pd.DataFrame.from_dict(gen_feat.class_indices,
+            orient='index', columns=['encoding']).reset_index().rename(
+            columns={'index': 'features'})
+
+        # Save the data frames to a CSV such that it can later be used in
+        # prediction.
+        df_cat.to_csv(self.output_dir + 'categories_{}.csv'.format(
+            time.strftime("%Y%m%d-%H%M%S")))
+
+        df_feat.to_csv(self.output_dir + 'features_{}.csv'.format(
+            time.strftime("%Y%m%d-%H%M%S")))
+
+        return
 
 
     def combine_generators(self, gen_init, df):
@@ -388,13 +420,13 @@ class GlobusCNN:
         self.gen_cat = gen_init.flow_from_dataframe(
             df, batch_size=self.batch_size_train,
             x_col='img_path', y_col='img_class', target_size=im_dims_tup,
-            shuffle=True, class_mode='categorical', seed=self.rand_state)
+            shuffle=False, class_mode='categorical', seed=self.rand_state)
 
         # Construct the feature generator.
         self.gen_feat = gen_init.flow_from_dataframe(
             df, batch_size=self.batch_size_train,
             x_col='img_path', y_col='features_clean', target_size=im_dims_tup,
-            shuffle=True, class_mode='categorical', seed=self.rand_state)
+            shuffle=False, class_mode='categorical', seed=self.rand_state)
 
         # Build a while loop to construct the generator.
         while True:
@@ -408,6 +440,13 @@ class GlobusCNN:
             y_1 = x_tmp[1]
             y_2 = y_tmp[1]
 
+            # TODO: DELETE AGAIN!
+            import matplotlib.pyplot as plt
+            for i in range(0, self.batch_size_train):
+                plt.imshow(x_tmp[0][i])
+                lab = list(self.gen_cat.class_indices.keys())[y_1[i].argmax()]
+                plt.savefig('./tmp/' + lab + '.png')
+
             yield x, [y_1, y_2]
 
 
@@ -417,14 +456,12 @@ class GlobusCNN:
         training and test data.
         '''
 
-        # If sample size not 'all', only get the first n images.
-        if not self.sample_size == 'all':
-            df_tmp = self.meta_data.iloc[:self.sample_size]
-        else:
-            df_tmp = self.meta_data.copy()
+        # Make a working copy of the meta data frame.
+        df_tmp = self.meta_data.copy()
 
-        df_tmp['img_path'] = df_tmp['hierarchy_clean'].apply(lambda x:
-            self.path_images + str(Path(x).parents[1]) + '/' +
+        # Define the image path.
+        df_tmp['img_path'] = df_tmp['hierarchy_clean'].apply(
+            lambda x: self.path_images + str(Path(x).parents[1]) + '/' +
             x.split('/')[-1] + '.png')
 
         # Add a column with image classification.
@@ -433,9 +470,17 @@ class GlobusCNN:
 
         # Only select the needed columns.
         df_sel = df_tmp[['img_path', 'img_class', 'features_clean']]
-        
+
+        # Take a stratified sample, if specified.
+        if not self.sample_frac == 'all':
+            df_strat = df_sel.sample(frac=self.sample_frac,
+                                     random_state=self.rand_state,
+                                     replace=False)
+        else:
+            df_strat = df_sel.copy()
+
         # Get train and test data.
-        train_df, test_df = self.tt_split(df_sel)
+        train_df, test_df = self.tt_split(df_strat)
 
         return train_df, test_df
 
@@ -455,7 +500,7 @@ class GlobusCNN:
         len_lst_feat_uq = len(lst_feat_uq)
 
         # Do an initial train-test split.
-        train_df, test_df = train_test_split(df, test_size=0.3)
+        train_df, test_df = train_test_split(df, test_size=self.test_size)
 
         # Define the unique categories and features of the train and test
         # data frame.
@@ -484,7 +529,7 @@ class GlobusCNN:
                 raise StopIteration('No valid train-test split found!')
 
             # Do a random train-test split without seed.
-            train_df, test_df = train_test_split(df, test_size=0.3)
+            train_df, test_df = train_test_split(df, test_size=self.test_size)
 
             # Define the unique categories and features of the train and
             # test data frame.

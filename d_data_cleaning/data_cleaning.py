@@ -63,7 +63,8 @@ def data_clean(df):
     df_red['fit'] = df_red['descr'].apply(findFit)
     df_red['bugelfrei'] = df_red['descr'].apply(findBugel)
 
-    # Add the fittype, pattern and bugelfrei to features.
+    # Add the fittype, pattern and bugelfrei to features as well as
+    # color_clean and season_clean.
     sel = df_red[['features', 'pattern', 'fit', 'bugelfrei', 'color_clean',
                   'season_clean']]
     df_red['features_tmp'] = sel.apply(extFeat, axis=1)
