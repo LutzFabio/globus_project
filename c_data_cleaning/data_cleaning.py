@@ -3,6 +3,8 @@ import numpy as np
 import re
 from ast import literal_eval
 from collections import Counter
+from pathlib import Path
+import os
 
 
 # Manual definition of categories to be included in training the model.
@@ -19,7 +21,8 @@ cat = ['taschen', 'schuhe', 'pullover-strick', 'top-shirts-sweats',
 # The fit types belong often (or always) to the description. In order to
 # have clean names, these following attributes are cleaned from the
 # description and put to the features.
-fit_types = ['slimfit','regularfit','skinnyfit','loosfit','taperedfit']
+fit_types = ['slimfit','regularfit','skinnyfit','loosfit','taperedfit',
+             'tailliert']
 
 # Similarly to fit types, colors often have some patterns associated with
 # them. In order to have clean colors, these patterns were cleaned and moved
@@ -31,10 +34,10 @@ pat = ['gestreift', 'klein gemustert', 'kariert', 'karo', 'Glattleder',
 # few columns are needed.
 cols_sel = ['globus_id', 'descr_clean', 'hierarchy_clean',
             'gender', 'source_color', 'color_clean', 'season',
-            'features_clean']
+            'features_clean', 'img_class', 'img_path']
 
 
-def data_clean(df):
+def data_clean(df, path_img):
 
     # Only select the categories, based on hierarchy_2.
     df_red = df[df['hierarchy_2'].isin(cat)]
@@ -93,12 +96,21 @@ def data_clean(df):
     sel = df_red[['descr_clean', 'features_tmp_2']]
     df_red['features_clean'] = sel.apply(descFeat, axis=1)
 
-    # Get reduced data frame for selected columns.
-    df_red_sel = df_red[cols_sel]
+    # Define the image path.
+    df_red['img_path'] = df_red['hierarchy_clean'].apply(
+        lambda x: path_img + str(Path(x).parents[1]) + '/' +
+                  x.split('/')[-1] + '.png')
+
+    # Add a column with image classification.
+    df_red['img_class'] = df_red['hierarchy_clean'].apply(
+        os.path.dirname).str.replace('/', '_').str.replace('-', '')
 
     # Get the unique colors in a separate data frame.
     colors = pd.DataFrame(data=df_red['color'].unique(), columns=[
         'colors_unique'])
+
+    # Get reduced data frame for selected columns.
+    df_red_sel = df_red[cols_sel]
 
     # Split it to train/validation and test data.
     train_val = df_red_sel.sample(frac=0.8, random_state=200)
@@ -339,8 +351,9 @@ def findBugel(x):
 
 if __name__ == '__main__':
 
-    # Define path to the raw csv .
-    path_p = './../c_data_parsing/'
+    # Define path to the raw csv and the images.
+    path_p = './../b_data_parsing/'
+    path_img = './images_small_new/'
 
     # Read the data.
     data = pd.read_csv(path_p + 'meta_all.csv')
@@ -349,7 +362,7 @@ if __name__ == '__main__':
 
     # Clean the data.
     data_c, data_c_red, data_c_train, data_c_test, colors = \
-        data_clean(data)
+        data_clean(data, path_img)
 
     # Dump data frames to CSV.
     data_c.to_csv('meta_clean.csv')
