@@ -5,27 +5,30 @@ from ast import literal_eval
 from collections import Counter
 
 
-# Define list used for the data cleaning.
-# cat = ['taschen', 'schuhe', 'pullover-strick', 'top-shirts-sweats',
-#        'schals', 'hemden', 'hosen', 'oberteile', 'blusen-tuniken',
-#        'shirts-tops-sweats', 'kleider', 'jacken', 'tagwasche',
-#        'strumpfmode', 'loungewearyoga', 'unterteile', 'wasche-pyjamas',
-#        'wasche', 'bademode', 'socken', 'jeans', 'mantel',
-#        'krawatten-fliegen-pochetten', 'kopfbedeckungen', 'kleider-sets',
-#        'nachtwasche', 'jupe', 'blazer', 'vestons', 'shorts-bermudas',
-#        'gurtel', 'handschuhe', 'westen-gilets', 'anzuge', 'poncho-cape',
-#        'lederjacken-mantel', 'overalls', 'morgen-bademantel',
-#        'lederjacken-ledermantel', 'shapewear']
-
+# Manual definition of categories to be included in training the model.
+# These categories were selected since they belong to clothes, have proper
+# data available and occur often enough. Thus, smaller categories were
+# excluded but could be included in further development of the algorithm.
+# For the features, this is handled by the function "listRareFeat" that
+# returns a list of the features with less than 1'000 occurences, which are
+# also excluded.
 cat = ['taschen', 'schuhe', 'pullover-strick', 'top-shirts-sweats',
        'schals', 'hemden', 'hosen', 'oberteile', 'blusen-tuniken',
        'shirts-tops-sweats', 'kleider']
 
+# The fit types belong often (or always) to the description. In order to
+# have clean names, these following attributes are cleaned from the
+# description and put to the features.
 fit_types = ['slimfit','regularfit','skinnyfit','loosfit','taperedfit']
 
+# Similarly to fit types, colors often have some patterns associated with
+# them. In order to have clean colors, these patterns were cleaned and moved
+# to the features too.
 pat = ['gestreift', 'klein gemustert', 'kariert', 'karo', 'Glattleder',
        'Lack']
 
+# The following cols are selected at the very end, since for training only a
+# few columns are needed.
 cols_sel = ['globus_id', 'descr_clean', 'hierarchy_clean',
             'gender', 'source_color', 'color_clean', 'season',
             'features_clean']
@@ -93,11 +96,15 @@ def data_clean(df):
     # Get reduced data frame for selected columns.
     df_red_sel = df_red[cols_sel]
 
+    # Get the unique colors in a separate data frame.
+    colors = pd.DataFrame(data=df_red['color'].unique(), columns=[
+        'colors_unique'])
+
     # Split it to train/validation and test data.
     train_val = df_red_sel.sample(frac=0.8, random_state=200)
     test = df_red_sel[~df_red_sel.index.isin(train_val.index)]
 
-    return df_red, df_red_sel, train_val, test
+    return df_red, df_red_sel, train_val, test, colors
 
 
 def cleanDf(x):
@@ -293,7 +300,7 @@ def delFit(x):
     from the string provided.
     '''
 
-    # If the one of the keywords is in the string provided,
+    # If one of the keywords is in the string provided,
     # remove the keyword.
     for s in fit_types  + ['bugelfrei', 'ausseide', '3fur2']:
        if s in x:
@@ -332,9 +339,8 @@ def findBugel(x):
 
 if __name__ == '__main__':
 
-    # Define path to the raw csv and path to the saving location.
-    path_p = '/home/fabiolutz/propulsion/globus_project/c_data_parsing/'
-    path_s = '/home/fabiolutz/propulsion/globus_project/d_data_cleaning/'
+    # Define path to the raw csv .
+    path_p = './../c_data_parsing/'
 
     # Read the data.
     data = pd.read_csv(path_p + 'meta_all.csv')
@@ -342,10 +348,12 @@ if __name__ == '__main__':
     data['features'] = data['features'].apply(literal_eval)
 
     # Clean the data.
-    data_c, data_c_red, data_c_train, data_c_test = data_clean(data)
+    data_c, data_c_red, data_c_train, data_c_test, colors = \
+        data_clean(data)
 
-    # Save it to another csv.
-    data_c.to_csv(path_s + 'meta_clean.csv')
-    data_c_red.to_csv(path_s + 'meta_clean_red.csv')
-    data_c_train.to_csv(path_s + 'meta_clean_red_train.csv')
-    data_c_test.to_csv(path_s + 'meta_clean_red_test.csv')
+    # Dump data frames to CSV.
+    data_c.to_csv('meta_clean.csv')
+    data_c_red.to_csv('meta_clean_red.csv')
+    data_c_train.to_csv('meta_clean_red_train.csv')
+    data_c_test.to_csv('meta_clean_red_test.csv')
+    colors.to_csv('colors_unique.csv')

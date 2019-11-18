@@ -35,7 +35,7 @@ def parsing(path, token):
         # Concat.
         df = pd.concat([df, fil], axis=0)
 
-    # Rearrane the columns.
+    # Rearrange the columns.
     df = df[head_c]
 
     # Save as csv.
@@ -102,7 +102,7 @@ def filter_json(file_path, token):
                     try:
                         df_tmp.loc[id_tmp, 'material'] = [ma['enum'] for ma in
                                                           i['material'][
-                                                              0]['values']]
+                                                          0]['values']]
                     except:
                         warnings.warn('--> NO material found.')
 
@@ -124,8 +124,8 @@ def filter_json(file_path, token):
                         for f in i['features']:
                             if 'produkttyp' in f['key']:
                                 try:
-                                    df_tmp.loc[id_tmp, 'descr'] = f['values'][0][
-                                        'enum']
+                                    df_tmp.loc[id_tmp, 'descr'] = f[
+                                        'values'][0]['enum']
                                 except:
                                     pass
                                 try:
@@ -136,18 +136,18 @@ def filter_json(file_path, token):
 
                             if 'name' in f['key']:
                                 try:
-                                    df_tmp.loc[id_tmp, 'name'] = f['values'][0][
-                                        'label']['de']
+                                    df_tmp.loc[id_tmp, 'name'] = f[
+                                        'values'][0]['label']['de']
                                 except:
                                     warnings.warn('--> NO name found.')
 
-                            if 'produkttyp' not in f['key'] and 'gender' not in f[
-                                'key'] and 'name' not in f['key']:
+                            if 'produkttyp' not in f['key'] and 'gender' \
+                                    not in f['key'] and 'name' not in f['key']:
                                 try:
                                     if isinstance(int(f['values'][0]['enum']),
                                                   int):
-                                        warnings.warn('--> NO feature: {}'.format(
-                                            f['key']))
+                                        warnings.warn('--> NO feature: '
+                                                      '{}'.format(f['key']))
                                 except:
                                     if 'enum' in f['values'][0].keys():
                                         feat_raw = [ma['enum'] for ma in f[
