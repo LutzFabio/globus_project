@@ -15,11 +15,12 @@ from sklearn.preprocessing import LabelBinarizer
 from sklearn.utils.class_weight import compute_class_weight
 from tensorflow.keras.models import Model, Sequential
 from tensorflow.keras.applications.resnet50 import ResNet50
+from tensorflow.keras.applications.vgg16 import VGG16
 from tensorflow.keras.preprocessing import image
 from tensorflow.keras.applications.resnet50 import preprocess_input, \
     decode_predictions
 from tensorflow.keras.layers import Dense, Flatten, Dropout, Conv2D, \
-  GaussianNoise, Input, Activation
+  GaussianNoise, Input, Activation, GlobalAveragePooling2D
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.preprocessing.image import img_to_array
 from tensorflow.keras.optimizers import Adam, RMSprop, Adadelta, Adagrad, \
@@ -44,22 +45,22 @@ class GlobusCNN:
     hor_flip =             True
     vert_flip =            True
     fill_mod =             'nearest'
-    batch_size_train =     5
-    batch_size_test =      5
+    batch_size_train =     16
+    batch_size_test =      8
     meta_file =            '/home/fabiolutz/propulsion/globus_project/' \
                            'd_data_cleaning/meta_clean_red_train.csv'
     path_images =          '/home/fabiolutz/propulsion/globus_project/' \
                            'e_model/images_small_new/'
     # meta_file =            '/home/ubuntu/efs/meta_clean_red_train.csv'
     # path_images =          '/home/ubuntu/efs/images_small_new/'
-    output_dir =           './output_glob/'
+    output_dir =           './output_glob_test/'
     sample_frac =          'all'
     test_size =            0.3
     rand_state=            200
     model_str =            'ResNet50'
     model_input=           (224, 224, 3)
     layer_old =            'conv5_block3_out'
-    layer_old_train =      None # 'conv5_block3'
+    layer_old_train =      ['conv5_block2', 'conv5_block3']
     activation_dense =     'relu'
     size_dense =           1024
     size_output =          1
@@ -67,12 +68,13 @@ class GlobusCNN:
     activation_last_cat =  'softmax'
     activation_last_feat = 'sigmoid'
     optimizer_str =        'Adam'
-    learning_rate =        0.1
-    loss =                 {'category': 'categorical_crossentropy',
+    learning_rate =        0.05
+    loss =                 {'category': 'binary_crossentropy',
                             'feature': 'binary_crossentropy'}
     metrics =              ['accuracy']
-    epochs =               5
-    batch_steps =          5
+    epochs =               30
+    batch_steps =          None
+    validation_freq =      3
 
 
     def __init__(self, load=False):
@@ -115,6 +117,12 @@ class GlobusCNN:
             if self.model_str == 'ResNet50':
                 self.model = ResNet50(weights='imagenet', include_top=False,
                                       input_shape=self.model_input)
+            #
+            # elif self.model_str == 'VGG16':
+                # mod_tmp = VGG16(weights='imagenet')
+                # last_layer = mod_tmp.get_layer('block5_pool')
+                # self.model = Sequential().add(Model(inputs=self.model_input,
+                #                                     outputs=last_layer))
 
             else:
                 raise ValueError('Model not implemented yet!')
@@ -170,7 +178,8 @@ class GlobusCNN:
             validation_steps=self.steps_test(),
             callbacks=[self.csv_logger, self.cat_cp_logger,
                        self.feat_cp_logger],
-            use_multiprocessing=True)
+            use_multiprocessing=True,
+            validation_freq=self.validation_freq)
 
         return
 
@@ -290,30 +299,29 @@ class GlobusCNN:
         # model.
         if self.layer_old_train is not None:
             for layer in self.model.layers:
-                trainable = (self.layer_old_train in layer.name)
+                trainable = (self.layer_old_train[0] in layer.name or
+                             self.layer_old_train[1] in layer.name)
                 layer.trainable = trainable
 
         # Create the categorical model.
-        flat_cat = Flatten()(self.model.outputs[0])
-        # class_cat = Dense(self.size_dense,
-        #                   activation=self.activation_dense)(flat_cat)
-        output_cat = Dense(self.len_cat_uq,
-                           activation=self.activation_dense)(flat_cat)
-        activ_cat = Activation(self.activation_last_cat,
-                               name='category')(output_cat)
+        model_cat = self.model.outputs[0]
+        model_cat = GlobalAveragePooling2D()(model_cat)
+        model_cat = Dense(self.len_cat_uq,
+                          activation=self.activation_dense)(model_cat)
+        model_cat = Activation(self.activation_last_cat,
+                               name='category')(model_cat)
 
         # Create the feature model.
-        flat_feat = Flatten()(self.model.outputs[0])
-        # class_feat = Dense(self.size_dense,
-        #                   activation=self.activation_dense)(flat_feat)
-        output_feat = Dense(self.len_feat_uq,
-                           activation=self.activation_dense)(flat_feat)
-        activ_feat = Activation(self.activation_last_feat,
-                                name='feature')(output_feat)
+        model_feat = self.model.outputs[0]
+        model_feat = GlobalAveragePooling2D()(model_feat)
+        model_feat = Dense(self.len_feat_uq,
+                           activation=self.activation_dense)(model_feat)
+        model_feat = Activation(self.activation_last_feat,
+                                name='feature')(model_feat)
 
         # Combine the model.
         model = Model(inputs=self.model.input,
-                      outputs=[activ_cat, activ_feat])
+                      outputs=[model_cat, model_feat])
 
         return model
 
@@ -439,13 +447,6 @@ class GlobusCNN:
             x = x_tmp[0]
             y_1 = x_tmp[1]
             y_2 = y_tmp[1]
-
-            # TODO: DELETE AGAIN!
-            import matplotlib.pyplot as plt
-            for i in range(0, self.batch_size_train):
-                plt.imshow(x_tmp[0][i])
-                lab = list(self.gen_cat.class_indices.keys())[y_1[i].argmax()]
-                plt.savefig('./tmp/' + lab + '.png')
 
             yield x, [y_1, y_2]
 
