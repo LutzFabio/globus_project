@@ -22,7 +22,7 @@ class GlobusCNN:
     '''
 
     # Settings.
-    model_type =             'own' # 'r50' or 'own'. If 'own', use tf.keras.
+    model_type =             'r50' # 'r50' or 'own'. If 'own', use tf.keras.
     im_resc =                 None
     rot_range =               180
     width_shift =             0.0
@@ -89,8 +89,8 @@ class GlobusCNN:
         # Initiate the Checkpoint logger that saves the model after ever
         # fifth epoch.
         self.cp_logger = ModelCheckpoint(
-            self.output_dir + 'model_r50_{epoch:08d}.h5',
-            save_weights_only=False,  period=self.mod_saved_after_epochs)
+            self.output_dir + 'model_' + self.model_type + '_{epoch:08d}.h5',
+            save_weights_only=False, period=self.mod_saved_after_epochs)
 
         # Define whether to train or to load a model and evaluate it.
         if not load:
@@ -267,10 +267,10 @@ class GlobusCNN:
         '''
 
         # Define an input layer.
-        inputs = Input(self.model_input)
+        inp = Input(self.model_input)
 
         # Create the categorical branch.
-        cat = Conv2D(32, (3, 3), padding="same")(inputs)
+        cat = Conv2D(32, (3, 3), padding="same")(inp)
         cat = Activation("relu")(cat)
         cat = BatchNormalization(axis=-1)(cat)
         cat = MaxPooling2D(pool_size=(3, 3))(cat)
@@ -295,7 +295,7 @@ class GlobusCNN:
                          name="category")(cat)
 
         # Create the feature branch.
-        feat = Conv2D(32, (3, 3), padding="same")(inputs)
+        feat = Conv2D(32, (3, 3), padding="same")(inp)
         feat = Activation("relu")(feat)
         feat = BatchNormalization(axis=-1)(feat)
         feat = MaxPooling2D(pool_size=(3, 3))(feat)
@@ -320,7 +320,7 @@ class GlobusCNN:
                           name="feature")(feat)
 
         # Combine both branches to one model.
-        self.model = Model(inputs=inputs,
+        self.model = Model(inputs=inp,
                            outputs=[cat, feat])
 
         return
@@ -627,7 +627,7 @@ class GlobusCNN:
             self.model_type, time.strftime("%Y%m%d-%H%M%S"))
 
         # Save model.
-        self.model.save_weights(f_wgt)
+        self.model.save(f_wgt)
 
         # Get data frames with the categories and features, according to the
         # encoding in the generator.
