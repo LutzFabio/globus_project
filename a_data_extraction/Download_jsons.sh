@@ -1,4 +1,5 @@
 #!/bin/bash
+#Download all data from Globus API
 i=200
 while [ $i -le 100000000 ]
 do

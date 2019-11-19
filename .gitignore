@@ -164,3 +164,6 @@ Thumbs.db
 *.jpg
 *.jpeg
 *.webp
+
+#models
+*.h5

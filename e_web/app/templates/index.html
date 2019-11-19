@@ -1,0 +1,335 @@
+<html>
+    <head>
+        <title>Home Page - Globus</title>
+        
+        <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+        <script type=”text/javascript” src=https://ajax.googleapis.com/ajax/libs/jquery/1.5.2/jquery.min.js></script>
+        <style>
+            h1 {font-family: Impact, fantasy;}
+            .h1_hover:hover {background-color: yellow;}
+            .dropdown {position: relative;}
+
+            /* Dropdown Content (Hidden by Default) */
+            .dropdown-content {
+              display: none;
+              position: absolute;
+              background-color: #f1f1f1;
+              min-width: 160px;
+              box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+              z-index: 1;
+              overflow:auto;
+              max-height:250px;
+              bottom: 100%; 
+            }
+            /* Change color of dropdown links on hover */
+            .dropdown-content a:hover {background-color: #ddd;}
+
+            /* Show the dropdown menu on hover */
+            .dropdown:hover .dropdown-content {display: block;}
+
+            /* Change the background color of the dropdown button when the dropdown content is shown */
+            .dropdown:hover .dropbtn {background-color: #3e8e41;}
+            div#loading {
+                display: block;
+                margin-left: auto;
+                margin-right: auto;
+                z-index:1000;
+                position:relative;
+                background: url({{ url_for('static', filename='loadingimage.gif') }}) no-repeat;
+                cursor: wait;
+                }
+                    .tree {
+                   
+                    min-width: 200px;
+                    min-height:200px;
+                    }
+                    .tree ul {
+                    word-wrap: break-word;
+                    padding-top: 20px;
+                    position: relative;
+                    transition: all 0.5s;
+                    -webkit-transition: all 0.5s;
+                    -moz-transition: all 0.5s;
+                    }
+                    .tree li {
+                    float: left;
+                    text-align: center;
+                    list-style-type: none;
+                    position: relative;
+                    padding: 20px 5px 0 5px;
+                    transition: all 0.5s;
+                    -webkit-transition: all 0.5s;
+                    -moz-transition: all 0.5s;
+                    }
+                    /*We will use ::before and ::after to draw the connectors*/
+                    .tree li::before, .tree li::after {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    right: 50%;
+                    border-top: 1px solid #ccc;
+                    width: 50%;
+                    height: 20px;
+                    }
+                    .tree li::after {
+                    right: auto;
+                    left: 50%;
+                    border-left: 1px solid #ccc;
+                    }
+                    /*We need to remove left-right connectors from elements without any siblings*/
+                    .tree li:only-child::after, .tree li:only-child::before {
+                    display: none;
+                    }
+                    /*Remove space from the top of single children*/
+                    .tree li:only-child {
+                    padding-top: 0;
+                    }
+                    /*Remove left connector from first child and right connector from last child*/
+                    .tree li:first-child::before, .tree li:last-child::after {
+                    border: 0 none;
+                    }
+                    /*Adding back the vertical connector to the last nodes*/
+                    .tree li:last-child::before {
+                    border-right: 1px solid #ccc;
+                    border-radius: 0 5px 0 0;
+                    -webkit-border-radius: 0 5px 0 0;
+                    -moz-border-radius: 0 5px 0 0;
+                    }
+                    .tree li:first-child::after {
+                    border-radius: 5px 0 0 0;
+                    -webkit-border-radius: 5px 0 0 0;
+                    -moz-border-radius: 5px 0 0 0;
+                    }
+                    /*Time to add downward connectors from parents*/
+                    .tree ul ul::before {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: 50%;
+                    border-left: 1px solid #ccc;
+                    width: 0;
+                    height: 20px;
+                    }
+                    .tree li div {
+                    border: 1px solid #ccc;
+                    padding: 5px 10px;
+                    text-decoration: none;
+                    color: #666;
+                    font-family: arial, verdana, tahoma;
+                    font-size: 11px;
+                    display: inline-block;
+                    min-width: 80px;
+                    min-height: 30px;
+                    border-radius: 5px;
+                    -webkit-border-radius: 5px;
+                    -moz-border-radius: 5px;
+                    transition: all 0.5s;
+                    -webkit-transition: all 0.5s;
+                    -moz-transition: all 0.5s;
+                    }
+                    .tree li div .male {
+                    background-color:lightblue;
+                    display: inline-block;
+                    width:90px;
+                    padding:10px;
+                    border-radius: 5px;
+                    -webkit-border-radius: 5px;
+                    -moz-border-radius: 5px;
+                    }
+                    .tree li div .female {
+                    background-color:#f2d9e6;
+                    height: auto;
+                    display: inline-block;
+                    width:90px;
+                    padding:10px;
+                    border-radius: 5px;
+                    -webkit-border-radius: 5px;
+                    -moz-border-radius: 5px;
+                    }
+                    .tree li div .kinder {
+                    background-color:#9fdfbf;
+                    display: inline-block;
+                    width:90px;
+                    padding:10px;
+                    border-radius: 5px;
+                    -webkit-border-radius: 5px;
+                    -moz-border-radius: 5px;
+                    }
+                    .tree li div .top_h {
+                    background-color:#999999;
+                    display: inline-block;
+                    width:90px;
+                    padding:10px;
+                    border-radius: 5px;
+                    -webkit-border-radius: 5px;
+                    -moz-border-radius: 5px;
+                    }
+                    .tree li div .spacer {
+                    background-color:lightblue;
+                    display: inline-block;
+                    width:10px;
+                    }
+                    /*Time for some hover effects*/
+                    /*We will apply the hover effect the the lineage of the element also*/
+                    .tree li div:hover, .tree li div:hover + ul li div {
+                    background: #c8e4f8;
+                    color: #000;
+                    border: 1px solid #94a0b4;
+                    }
+                    /*Connector styles on hover*/
+                    .tree li div:hover + ul li::after,
+                    .tree li div:hover + ul li::before,
+                    .tree li div:hover + ul::before,
+                    .tree li div:hover + ul ul::before {
+                    border-color: #94a0b4;
+                    }
+        </style>
+            <script type="text/javascript">// <![CDATA[
+                function loading(){
+                    $("#loading").show();
+                    $("#content").hide();       
+                    }
+// ]]>          </script>
+    </head>
+    <body style="position: relative;">
+        <div id="loading"></div>
+    <div id="content">
+                    <div class="w3-container w3-black w3-margin-left w3-margin-right">
+                        <div ><h1><image src="{{ url_for('static', filename='logo.webp') }}" /> image classification with 
+                                <div class="w3-dropdown-hover" ><h1>{{ used_model }}</h1>
+                                <div class="w3-dropdown-content w3-bar-block w3-border">
+                        
+                                    {% for item in models %}
+                                    <h1 class="w3-bar-item w3-button h1_hover">{{ item }}</h1>
+                                    {% endfor %}
+                                    </div>
+
+                                </div>
+                        </h1></div>
+                        
+
+
+                    </div>
+        <div class="w3-container w3-white w3-margin-left w3-margin-right">
+                <!--- <div class="w3-col m6" ><h3 style="color: #b3b3b3">{{ img }}</h3></div>-->
+                    <form method=post enctype=multipart/form-data style="position: relative; padding-top: 1%">
+                        <input type=file name=file class="w3-input w3-border-0 w3-col m4" id="file">
+                        <input value="Upload my image" type=submit class="w3-button w3-white w3-border w3-hover-black w3-round-large w3-padding-small w3-col m2" />                 
+                    </form>
+                <div class="w3-col m6" ><h3 style="color: #b3b3b3"></h3></div>
+        </div>
+
+        <div class="w3-container w3-white w3-margin-left w3-margin-right w3-white">
+
+                    
+            <div class="w3-col w3-left w3-white m4" >
+                <div class="w3-display-container mySlides" style="width:100%"; >
+                <img class="w3-border w3-white" style="max-width:100%;" src="{{ img }}"/>
+                <a id="leftbtn" name="leftbtn" class="w3-button w3-display-left" href="/{{ prev_img }}" onclick="loading();">&#10094;</a>
+                <a id="rightbtn" name="rightbtn" class="w3-button w3-display-right" href="/{{ next_img }}"
+                onclick="loading();">&#10095;</a>
+                <div><h3 style="color: #b3b3b3">{{ img }}</h3></div>
+            </div>
+            </div>
+
+            <div class="w3-col w3-right w3-white m8">
+                   <form id="form1">
+     
+                    <div class="tree">
+                        <ul>
+                            <li><div><span class="top_h">Hierarchy</span></div>
+                            <ul>
+                            {% for item in tree_up %}
+                             {% if 'Her' in item %}
+                                <li><div><span class="male">{{ item }}</span></div>
+                                    {% if tree_dict['Herren']!=[] %}
+                                <ul>
+                                    
+                                    {% for it in tree_dict['Herren'] %}
+                                        <li><div><span class="male">{{ it }}</span></div></li>
+                                    {% endfor %}
+                                    
+                                </ul>
+                                {% endif %}
+                                </li> 
+                                {% elif 'Damen a' in item %}             
+                                <li><div><span class="female">{{ item }}</span></div>
+                                    {% if tree_dict['Damen accessoires']!=[] %}
+                                <ul>
+                                    
+                                    {% for it in tree_dict['Damen accessoires'] %}
+                                        <li><div><span class="female">{{ it }}</span></div></li>
+                                    {% endfor %}
+                                    
+                                </ul>
+                                {% endif %}
+                                </li> 
+                                {% elif 'Damen' in item %}             
+                                <li><div><span class="female">{{ item }}</span></div>
+                                    {% if tree_dict['Damen']!=[] %}
+                                <ul>
+                                    
+                                    {% for it in tree_dict['Damen'] %}
+                                        <li><div><span class="female">{{ it }}</span></div></li>
+                                    {% endfor %}
+                                    
+                                </ul>
+                                {% endif %}
+                                </li>
+                                {% else %}
+                                <li><div><span class="kinder">{{ item }}</span></div>
+                                    {% if tree_dict['Kinder']!=[] %}
+                                <ul>
+                                    
+                                    {% for it in tree_dict['Kinder'] %}
+                                        <li><div><span class="kinder">{{ it }}</span></div></li>
+                                    {% endfor %}
+                                    
+                                </ul>
+                                {% endif %}
+                                </li>
+                                {% endif %}
+                            {% endfor %}
+                             
+                            </ul>
+                    </div>
+                </form>
+                <ul class="w3-hoverable w3-ul w3-white w3-container" style="min-width:250px; padding-left:10%; padding-right:30%">
+                        <h4>Color</h4>
+                        <li class="w3-display-container" style="min-width:250px;">{{ color }}
+                              <span onclick="this.parentElement.style.display='none'"
+                              class="w3-button w3-display-right">&times;</span>
+                        </li>
+                        <li class="w3-display-container" style="min-width:250px; background-color:{{ col_s }} ">{{ col_s }}
+                              <span onclick="this.parentElement.style.display='none'"
+                              class="w3-button w3-display-right">&times;</span>
+                        </li>
+                        <h4>Features</h4>
+                        {% for item in data %}
+                        <li class="w3-display-container" style="min-width:250px; ">{{ item }}
+                              <span onclick="this.parentElement.style.display='none'"
+                              class="w3-button w3-display-right">&times;</span>
+                        </li>
+                        {% endfor %}
+                        <li> 
+                            <div class="dropdown">
+                              <button class="w3-dropbtn w3-button">- Other features</button>
+                              <div class="dropdown-content w3-bar-block w3-border">
+                                {% for item in rest_features %}
+                                <a href="#" class="w3-bar-item w3-button">{{ item }}</a>
+                                {% endfor %}
+
+                              </div>
+                            </div>
+                        </li>
+                    </ul>
+
+            
+
+            </div>
+    </div>
+        <div class="w3-container w3-black w3-margin-left w3-margin-right w3-center">
+            © Fabio&Masha@Propulsion Academy - 11.2019
+        </div>
+    </body>
+</html>
