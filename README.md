@@ -11,4 +11,4 @@ Propulsion project to classify images for Globus that should be deployed afterwa
 
 - ***d_model:*** Build branched convolutional neural network to predict categories and features simultaneousely
 
--***e_web:*** Flask based user interface to check model predictions
+- ***e_web:*** Flask based user interface to check model predictions
