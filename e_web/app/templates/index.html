@@ -39,13 +39,15 @@
                 cursor: wait;
                 }
                     .tree {
-                   
+                    position:relative;
                     min-width: 200px;
                     min-height:200px;
                     }
                     .tree ul {
                     word-wrap: break-word;
                     padding-top: 20px;
+                    padding-left:5px;
+                    padding-right:5px;
                     position: relative;
                     transition: all 0.5s;
                     -webkit-transition: all 0.5s;
@@ -56,7 +58,7 @@
                     text-align: center;
                     list-style-type: none;
                     position: relative;
-                    padding: 20px 5px 0 5px;
+                    padding: 20px 5px 0 0px;
                     transition: all 0.5s;
                     -webkit-transition: all 0.5s;
                     -moz-transition: all 0.5s;
@@ -116,7 +118,7 @@
                     text-decoration: none;
                     color: #666;
                     font-family: arial, verdana, tahoma;
-                    font-size: 11px;
+                    font-size: 1em;
                     display: inline-block;
                     min-width: 80px;
                     min-height: 30px;
@@ -127,20 +129,20 @@
                     -webkit-transition: all 0.5s;
                     -moz-transition: all 0.5s;
                     }
-                    .tree li div .male {
+                    .tree li div .herren {
                     background-color:lightblue;
                     display: inline-block;
-                    width:90px;
+                    width:8em;
                     padding:10px;
                     border-radius: 5px;
                     -webkit-border-radius: 5px;
                     -moz-border-radius: 5px;
                     }
-                    .tree li div .female {
+                    .tree li div .damen, .tree li div .damenaccessoires {
                     background-color:#f2d9e6;
                     height: auto;
                     display: inline-block;
-                    width:90px;
+                    width:8em;
                     padding:10px;
                     border-radius: 5px;
                     -webkit-border-radius: 5px;
@@ -149,7 +151,7 @@
                     .tree li div .kinder {
                     background-color:#9fdfbf;
                     display: inline-block;
-                    width:90px;
+                    width:8em;
                     padding:10px;
                     border-radius: 5px;
                     -webkit-border-radius: 5px;
@@ -184,30 +186,39 @@
                     border-color: #94a0b4;
                     }
         </style>
-            <script type="text/javascript">// <![CDATA[
+
+            <script type="text/javascript">
                 function loading(){
                     $("#loading").show();
                     $("#content").hide();       
                     }
-// ]]>          </script>
+                $("#tree_cell").click(function(){
+                        var color = clicked ? 'red' : 'blue';
+                        $(this).css('background-color', color);
+                        clicked = !clicked;
+                    });
+            </script>
     </head>
     <body style="position: relative;">
         <div id="loading"></div>
     <div id="content">
                     <div class="w3-container w3-black w3-margin-left w3-margin-right">
-                        <div ><h1><image src="{{ url_for('static', filename='logo.webp') }}" /> image classification with 
-                                <div class="w3-dropdown-hover" ><h1>{{ used_model }}</h1>
+                        <form method="post" enctype=multipart/form-data>
+                        <div ><h1><image src="{{ url_for('static', filename='logo.webp') }}" /> fashion classification with 
+
+                            
+                                <div class="w3-dropdown-hover" ><h1>{{ used_model[:-3] }}</h1>
                                 <div class="w3-dropdown-content w3-bar-block w3-border">
                         
                                     {% for item in models %}
-                                    <h1 class="w3-bar-item w3-button h1_hover">{{ item }}</h1>
+                                    <button style="display: inline-block;" class="w3-bar-item w3-button h1_hover" id="used_model" name="used_model" value="{{ item }}" type="submit">{{ item[:-3] }}</button>
                                     {% endfor %}
                                     </div>
 
                                 </div>
+                            
                         </h1></div>
-                        
-
+                        </form>
 
                     </div>
         <div class="w3-container w3-white w3-margin-left w3-margin-right">
@@ -239,56 +250,29 @@
                         <ul>
                             <li><div><span class="top_h">Hierarchy</span></div>
                             <ul>
-                            {% for item in tree_up %}
-                             {% if 'Her' in item %}
-                                <li><div><span class="male">{{ item }}</span></div>
-                                    {% if tree_dict['Herren']!=[] %}
-                                <ul>
-                                    
-                                    {% for it in tree_dict['Herren'] %}
-                                        <li><div><span class="male">{{ it }}</span></div></li>
+                            {% for item in final_dict %}
+                                <li><div style="background-color:{{ final_dict[item]['color'] }};"><span class="{{ item }}">{{ final_dict[item]['name'] }}</span></div>
+                                {% if final_dict[item]['subh']!=[] %}
+                                <ul> 
+                                    {% for subh in final_dict[item]['subh'] %}
+                                        <li><div style="background-color:{{ subh['color'] }};"><span class="{{ item }}">{{ subh['name'] }}</span></div>
+                                            {% if subh['subh']!=[] %}
+                                                <ul> 
+                                                    {% for subhs in subh['subh'] %}
+                                                        <li><div style="background-color:{{ subhs['color'] }};"><span class="{{ item }}">{{ subhs['name'] }}</span></div></li>
+                                                    {% endfor %}
+                                                    
+                                                </ul>
+                                                {% endif %}
+
+                                        </li>
                                     {% endfor %}
                                     
                                 </ul>
                                 {% endif %}
-                                </li> 
-                                {% elif 'Damen a' in item %}             
-                                <li><div><span class="female">{{ item }}</span></div>
-                                    {% if tree_dict['Damen accessoires']!=[] %}
-                                <ul>
-                                    
-                                    {% for it in tree_dict['Damen accessoires'] %}
-                                        <li><div><span class="female">{{ it }}</span></div></li>
-                                    {% endfor %}
-                                    
-                                </ul>
-                                {% endif %}
-                                </li> 
-                                {% elif 'Damen' in item %}             
-                                <li><div><span class="female">{{ item }}</span></div>
-                                    {% if tree_dict['Damen']!=[] %}
-                                <ul>
-                                    
-                                    {% for it in tree_dict['Damen'] %}
-                                        <li><div><span class="female">{{ it }}</span></div></li>
-                                    {% endfor %}
-                                    
-                                </ul>
-                                {% endif %}
+
                                 </li>
-                                {% else %}
-                                <li><div><span class="kinder">{{ item }}</span></div>
-                                    {% if tree_dict['Kinder']!=[] %}
-                                <ul>
-                                    
-                                    {% for it in tree_dict['Kinder'] %}
-                                        <li><div><span class="kinder">{{ it }}</span></div></li>
-                                    {% endfor %}
-                                    
-                                </ul>
-                                {% endif %}
-                                </li>
-                                {% endif %}
+
                             {% endfor %}
                              
                             </ul>
@@ -313,13 +297,15 @@
                         {% endfor %}
                         <li> 
                             <div class="dropdown">
+                           <form method="post" enctype=multipart/form-data>
                               <button class="w3-dropbtn w3-button">- Other features</button>
                               <div class="dropdown-content w3-bar-block w3-border">
                                 {% for item in rest_features %}
-                                <a href="#" class="w3-bar-item w3-button">{{ item }}</a>
+                                <button class="w3-bar-item w3-button" id="rest_f" name="rest_f" value="{{ item }}" type="submit">{{ item }}</button>
                                 {% endfor %}
 
                               </div>
+                          </form>
                             </div>
                         </li>
                     </ul>

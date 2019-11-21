@@ -1,0 +1,29 @@
+                <ul class="w3-cell w3-cell-top w3-ul w3-white w3-margin-right" style="padding-left:5%">
+                <h4>Hierarchy</h4>
+                <form method="post">
+
+                <li>
+                    <div class="w3-dropdown-hover">
+                    <button class="w3-button">{{cat_1_sel}}</button>
+                    <div class="w3-dropdown-content w3-bar-block w3-border myDropDown">
+                    
+                    {% for item in cat_1 %}
+                    <button class="w3-bar-item w3-button" id="cat_1" name="cat_1" value="{{ item }}" type="submit">{{ item }}</button>
+                    {% endfor %}
+                    </div>
+                    </div>
+                </li>
+                
+                <li>
+                    <div class="w3-dropdown-hover">
+                    <button class="w3-button" style="padding-left:50%">{{cat_2_sel}}</button>
+                    <div class="w3-dropdown-content w3-bar-block w3-border myDropDown">
+                    
+                    {% for item in cat_2 %}
+                    <button class="w3-bar-item w3-button" id="cat_2" name="cat_2" value="{{ item }}" type="submit">{{ item }}</button>
+                    {% endfor %}
+                    </div>
+                    </div>
+                </li>
+                
+                </form>
