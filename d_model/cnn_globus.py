@@ -22,7 +22,7 @@ class GlobusCNN:
     '''
 
     # Settings.
-    model_type =             'r50' # 'r50' or 'own'. If 'own', use tf.keras.
+    model_type =             'r50' # 'r50' or 'own'
     im_resc =                 None
     rot_range =               180
     width_shift =             0.0
@@ -43,7 +43,7 @@ class GlobusCNN:
     model_str =               'ResNet50'
     model_input =             (224, 224, 3)
     model_input_gen =         (224, 224)
-    num_layers_not_trained =  143
+    num_layers_not_trained =  'all'
     size_dense =              1024
     dropout =                 0.2
     activation_mid_both =     'relu'
@@ -55,7 +55,7 @@ class GlobusCNN:
                                'feature': 'binary_crossentropy'}
     metrics =                 {'category':'accuracy',
                                'feature':'accuracy'}
-    epochs =                  30
+    epochs =                  20
     batch_steps =             None
     validation_freq =         1
     mod_saved_after_epochs =  5
@@ -151,8 +151,8 @@ class GlobusCNN:
 
         # Compile the model.
         self.model.compile(optimizer=self.optimizer,
-                               loss=self.loss,
-                               metrics=self.metrics)
+                           loss=self.loss,
+                           metrics=self.metrics)
 
         # Train the model.
         self.model_trained = self.model.fit_generator(
@@ -422,13 +422,13 @@ class GlobusCNN:
             im_dims_tup = self.model.layers[0].input_shape[1:3]
 
         # Construct the categorical generator.
-        self.gen_cat = gen_init.flow_from_dataframe(
+        gen_cat = gen_init.flow_from_dataframe(
             df, batch_size=batch_size, x_col='img_path', y_col='img_class',
             target_size=im_dims_tup, shuffle=False, class_mode='categorical',
             seed=self.rand_state)
 
         # Construct the feature generator.
-        self.gen_feat = gen_init.flow_from_dataframe(
+        gen_feat = gen_init.flow_from_dataframe(
             df, batch_size=batch_size, x_col='img_path',
             y_col='features_clean', target_size=im_dims_tup, shuffle=False,
             class_mode='categorical', seed=self.rand_state)
@@ -437,8 +437,8 @@ class GlobusCNN:
         while True:
 
             # Go to the next batch.
-            x_tmp = next(self.gen_cat)
-            y_tmp = next(self.gen_feat)
+            x_tmp = next(gen_cat)
+            y_tmp = next(gen_feat)
 
             # Assign the encoded arrays to variables that are then yielded.
             x = x_tmp[0]
