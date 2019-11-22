@@ -1,0 +1,35 @@
+<html>
+    <head>
+        <title>Home Page - Globus</title>
+        <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+    </head>
+    <body>
+    	<ul class="w3-cell w3-cell-top w3-ul w3-white w3-margin-right" style="padding-left:5%">
+    	<li>
+    	<form method="post">
+    		<div class="w3-dropdown-hover">
+    		<button class="w3-button">{{cat_2_sel}}</button>
+    		<div class="w3-dropdown-content w3-bar-block w3-border myDropDown">
+    		
+    		{% for item in cat_2 %}
+    		<button class="w3-bar-item w3-button" id="rating" name="rating" value="{{ item }}" type="submit">{{ item }}</button>
+    		{% endfor %}
+    		</div>
+    		</div>
+    	</li>
+    	    <li>
+    		<div class="w3-dropdown-hover">
+    		<button class="w3-button">{{cat_2_sel}}</button>
+    		<div class="w3-dropdown-content w3-bar-block w3-border myDropDown">
+    		
+    		{% for item in cat_2 %}
+    		<button class="w3-bar-item w3-button" id="rating" name="rating" value="{{ item }}" type="submit">{{ item }}</button>
+    		{% endfor %}
+    		</div>
+    		</div>
+    	
+    	</li>
+    	</form>
+    </ul>
+    </body>
+ </html>
