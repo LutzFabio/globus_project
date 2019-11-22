@@ -1,33 +1,31 @@
 ############################################################################################
 ############################################################################################
-# Globus Project
+# Enhancing Fashion Business Processes using AI for [Globus](https://www.globus.ch)
 ############################################################################################
 ############################################################################################
 
-This is the official documentation about the final project we did for Globus after our Data
+This is the official documentation for the final project we did for Globus after the Data
 Science bootcamp at Propulsion Academy in Zurich.
 
 ## Problem description
 Globus is a fashion retailer that besides its stores (such as the flagship store at Zurich
-Bahnhofstrasse) also sells fashion products through their own online store (www.globus.ch).
-For their online store, Globus needs thousands of pictures of all their products. Currently,
+Bahnhofstrasse) also sells fashion products through their online store (www.globus.ch).
+The online store holds thousands of images representing the products together with description. Currently,
 these pictures are classified (t-shirt, shoe, etc.) and described (color, texture, etc.)
-manually by employees that spend many of their valuable working hours to doing this rather
+manually by employees, that takes many of their valuable working hours for such rather
 monotonuous work.
 
 ## Goal
-Because of this problem faced, Globus approached Propulsion Academy to explore whether
-the daily life of these employees could be made more meaningful. More precisely, Globus
-wanted us to develop AI prototype algorithms that could do part of the monotonuous work for 
-these employees such that more of the working time could be devoted to more interessting 
-and more valuable tasks.
+Globus approached Propulsion Academy to explore whether the daily life of their employees 
+could be made more meaningful. More precisely, Globus wanted us to develop AI prototype 
+algorithms that could do part of the monotonuous work for the employees such that more 
+of the working time could be devoted to more interessting and more valuable tasks.
 
 ## Summary of results
-A prototype has been successfully developed by using deep learning techniques, or more 
-precisely Convolutional Neural Networks. The results show clearly that having AI algorithms
-supporting Globus in classifying and describing fashion images is possible. Since there 
-was only less than four weeks of time (incl. data querying and data cleaning), the algorithm
-is not yet fully developped and can be further improved. Ideas how to do it, will be
+A prototype has been successfully developed by using deep learning techniques (Convolutional Neural Networks).
+The results show clearly that having AI algorithms supporting Globus in classifying and describing 
+fashion images is possible. Since there was only less than four weeks of time (incl. data querying and data cleaning), 
+the algorithm is not yet fully developped and can be further improved. Ideas how to do it, will be
 presented later in this document.
 
 ## Workflow description
