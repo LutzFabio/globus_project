@@ -7,7 +7,7 @@
 This is the official documentation about the final project we did for Globus after our Data
 Science bootcamp at Propulsion Academy in Zurich.
 
-### Problem description
+## Problem description
 Globus is a fashion retailer that besides its stores (such as the flagship store at Zurich
 Bahnhofstrasse) also sells fashion products through their own online store (www.globus.ch).
 For their online store, Globus needs thousands of pictures of all their products. Currently,
@@ -15,14 +15,14 @@ these pictures are classified (t-shirt, shoe, etc.) and described (color, textur
 manually by employees that spend many of their valuable working hours to doing this rather
 monotonuous work.
 
-### Goal
+## Goal
 Because of this problem faced, Globus approached Propulsion Academy to explore whether
 the daily life of these employees could be made more meaningful. More precisely, Globus
 wanted us to develop AI prototype algorithms that could do part of the monotonuous work for 
 these employees such that more of the working time could be devoted to more interessting 
 and more valuable tasks.
 
-### Summary of results
+## Summary of results
 A prototype has been successfully developed by using deep learning techniques, or more 
 precisely Convolutional Neural Networks. The results show clearly that having AI algorithms
 supporting Globus in classifying and describing fashion images is possible. Since there 
@@ -30,14 +30,14 @@ was only less than four weeks of time (incl. data querying and data cleaning), t
 is not yet fully developped and can be further improved. Ideas how to do it, will be
 presented later in this document.
 
-### Workflow description
+## Workflow description
 
-# main folder
+### main folder
 In the main folder, besides this README file, a licence can be found and the environment
 ("environment.yml") which can be installed using "conda" and includes all the packages 
 that are needed to execute the code.
 
-# a_data_parsing
+### a_data_parsing
 In this folder, all the code snippets can be found that were needed to extract the raw data
 from the API of Globus. The steps included were the following:
 
@@ -65,7 +65,7 @@ from the API of Globus. The steps included were the following:
 	   done by a bash script.
 	   --> Resize_move_images.sh
 
-# b_data_cleaning
+### b_data_cleaning
 In this folder, all the code is found that is used for cleaning the raw data downloaded in
 the previous step. By accessing the CSV file that contains all the image information (see
 previous section), a clean data set is being generated. Clean means for example that a
@@ -84,7 +84,7 @@ should be excluded since these may not be associated with a particular category.
 script, however, is currently not implemented in the main process but could be done in the
 future, if needed.
 
-# c_model
+### c_model
 This folder contains the code that trains Convolutional Neural Networks based on the clean
 data generated in the previous step. In order to to both, categorizing fashion images (e.g. t-shirt, jacket, etc.) and describing their features (e.g. color, texture, etc.) is a 
 different task but nevertheless is somehow related we decided to implement a single-input,
@@ -128,7 +128,7 @@ that in the settings) and the losses and accuracies are saved in a log file. Fur
 the model is saved at the end together with various self-created outputs, such as 
 confusion matrices, validation predictions, etc.
 
-# e_web
+### d_web
 This folder contains all the necessary code snippets for running the UI created for this
 project. The UI allows to upload images and the predict them based on several underlying
 models and provides a visual probability tree for the classification of the images. Further,
@@ -140,7 +140,7 @@ When running the UI, it can happen that an error occures that complains about "t
 "keras" or a combination thereof. In order to solve this problem, tensorflow has to be
 installed on the computer itself (and not only in the conda environment). 
 
-### Challenges faced
+## Challenges faced
 During the process of implementing this prototype, we faced the follwing challenges that$
 are noteworthy to share:
 
@@ -154,7 +154,7 @@ are noteworthy to share:
 	   together with a complex architecture proved especially difficult. We solved
 	   this by implementing a custom data generator.
 
-### Suggestions for improving the model
+## Suggestions for improving the model
 Since there were only less than four weeks of time, the model is not fully developed so
 far and we had many more ideas how to further improve it. The most important ones are the
 following:
@@ -184,7 +184,7 @@ following:
 	6. Even though we have invested a lot of time to clean the features, the features
 	   could still be cleaned further.
 
-### Final word
+## Final word
 At this point, we would like to thank Globus for giving us such a challenging and
 interesting project to us. We learned a whole lot during these weeks and hope that our
 prototype builds a good base for them in order to make their internal processes more
