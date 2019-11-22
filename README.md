@@ -10,8 +10,8 @@ Science bootcamp at Propulsion Academy in Zurich.
 ## Problem description
 Globus is a fashion retailer that besides its stores (such as the flagship store at Zurich
 Bahnhofstrasse) also sells fashion products through their online store (www.globus.ch).
-The online store holds thousands of images representing the products together with description. Currently,
-these pictures are classified (t-shirt, shoe, etc.) and described (color, texture, etc.)
+The online store holds thousands of images representing the products together with description.
+Currently, these pictures are classified (t-shirt, shoe, etc.) and described (color, texture, etc.)
 manually by employees, that takes many of their valuable working hours for such rather
 monotonuous work.
 
@@ -55,7 +55,7 @@ from the API of Globus. The steps included were the following:
 
 	3. The CSV's are then put together to one large CSV file. This is done again using
 	   a bash script.
-	   --> merce_csv.sh 
+	   --> merge_csv.sh 
 
 	4. As a last step, the images are moved to a specified folder structure, are resized
 	   to identical sizes and are converted to PNG format (needed for later processing,
