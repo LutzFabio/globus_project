@@ -352,7 +352,7 @@ def findBugel(x):
 if __name__ == '__main__':
 
     # Define path to the raw csv and the images.
-    path_p = './../b_data_parsing/'
+    path_p = './../a_data_extraction/'
     path_img = './images_small_new/'
 
     # Read the data.

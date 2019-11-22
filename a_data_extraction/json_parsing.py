@@ -407,14 +407,13 @@ if __name__ == '__main__':
 
     # # Define the json path.
     # json_path = './test.json'
-    #
-    # # Access to API.
-    # myToken = str(pd.read_csv('token_file.txt',
-    #                           header=None).values.squeeze())
-    #
-    # filter_json(json_path, myToken)
 
+    # Access to API.
+    myToken = str(pd.read_csv('token_file_2.txt',
+                              header=None).values.squeeze())
+
+    # Input from bash file
     json_path = sys.argv[1]
-    token = sys.argv[2]
 
-    filter_json(json_path, token)
+    # Parse and download.
+    filter_json(json_path, myToken)
