@@ -169,20 +169,24 @@ following:
 	   of all the zeros is also counted as accuracy, thus leading to a high accuracy
 	   and low loss.
 
-	3. Pictures the are taken from very close and only show the material could be
+	3. Another idea for a custom loss function an accuracy score would be to include
+	   not only the lowest level of the hierarchy but also the predictions on the
+	   upper level (e.g. herren, damen, etc.).
+
+	4. Pictures the are taken from very close and only show the material could be
 	   removed. In order to do so, a code snipped is provided for that such that
 	   this could be implemented in the running infrastructure.
 
-	4. For time reasons, we were not able to test a lot of layer structures. Maybe
+	5. For time reasons, we were not able to test a lot of layer structures. Maybe
 	   the performance can be improved by adding more layers, using a different
 	   dropout rate, etc.
 
-	5. The underlying data could be made more balanced by intentionally increasing
+	6. The underlying data could be made more balanced by intentionally increasing
 	   the amount of images for categories / features less occuring. This because
 	   making the data balanced on the feature side cannot be obtained by simply
 	   up- or downsampling (since the same feature is present for several items).
 
-	6. Even though we have invested a lot of time to clean the features, the features
+	7. Even though we have invested a lot of time to clean the features, the features
 	   could still be cleaned further.
 
 ## Final word
