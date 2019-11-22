@@ -164,7 +164,7 @@ following:
 
 	2. Apply a custom loss function and accuracy score for features. The currently
 	   used "binary_crossentropy" with "binary_accuracy" is by default very low and
-           very high, respectivaly. This because there are many features but only a few of
+	   very high, respectively. This because there are many features but only a few of
 	   them are present for a particular product. That means that a correct predction
 	   of all the zeros is also counted as accuracy, thus leading to a high accuracy
 	   and low loss.
