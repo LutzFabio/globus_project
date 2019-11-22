@@ -162,11 +162,12 @@ following:
 	1. Split the features into groups (colors, texture, material, etc.) and create a
 	   separate output branch for each feature.
 
-	2. Apply a custom loss function / accuracy score for features. The currently
-	   used "binary_crossentropy" with "binary_accuracy" is by default very low/
-           high. This because there are many features but only a few of them are present 
-           for a particular product. That means that a correct predction of all the zeros
-	   is also counted as accuracy, thus leading to a high accuracy and low loss.
+	2. Apply a custom loss function and accuracy score for features. The currently
+	   used "binary_crossentropy" with "binary_accuracy" is by default very low and
+           very high, respectivaly. This because there are many features but only a few of
+	   them are present for a particular product. That means that a correct predction
+	   of all the zeros is also counted as accuracy, thus leading to a high accuracy
+	   and low loss.
 
 	3. Pictures the are taken from very close and only show the material could be
 	   removed. In order to do so, a code snipped is provided for that such that
