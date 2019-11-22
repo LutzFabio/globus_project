@@ -4,11 +4,12 @@
         
         <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
         <script type=”text/javascript” src=https://ajax.googleapis.com/ajax/libs/jquery/1.5.2/jquery.min.js></script>
-        <style>
+        <style> /* Could be shifted to separate css, but I am afraid */
             h1 {font-family: Impact, fantasy;}
             .h1_hover:hover {background-color: yellow;}
-            .dropdown {position: relative;}
 
+            /* ----------Custom dropdown menu ---------------*/
+            .dropdown {position: relative;}
             /* Dropdown Content (Hidden by Default) */
             .dropdown-content {
               display: none;
@@ -23,12 +24,12 @@
             }
             /* Change color of dropdown links on hover */
             .dropdown-content a:hover {background-color: #ddd;}
-
             /* Show the dropdown menu on hover */
             .dropdown:hover .dropdown-content {display: block;}
-
             /* Change the background color of the dropdown button when the dropdown content is shown */
             .dropdown:hover .dropbtn {background-color: #3e8e41;}
+
+            /* Want to show loading image, does not work so far */
             div#loading {
                 display: block;
                 margin-left: auto;
@@ -38,155 +39,157 @@
                 background: url({{ url_for('static', filename='loadingimage.gif') }}) no-repeat;
                 cursor: wait;
                 }
-                    .tree {
-                    position:relative;
-                    min-width: 200px;
-                    min-height:200px;
-                    }
-                    .tree ul {
-                    word-wrap: break-word;
-                    padding-top: 20px;
-                    padding-left:5px;
-                    padding-right:5px;
-                    position: relative;
-                    transition: all 0.5s;
-                    -webkit-transition: all 0.5s;
-                    -moz-transition: all 0.5s;
-                    }
-                    .tree li {
-                    float: left;
-                    text-align: center;
-                    list-style-type: none;
-                    position: relative;
-                    padding: 20px 5px 0 0px;
-                    transition: all 0.5s;
-                    -webkit-transition: all 0.5s;
-                    -moz-transition: all 0.5s;
-                    }
-                    /*We will use ::before and ::after to draw the connectors*/
-                    .tree li::before, .tree li::after {
-                    content: '';
-                    position: absolute;
-                    top: 0;
-                    right: 50%;
-                    border-top: 1px solid #ccc;
-                    width: 50%;
-                    height: 20px;
-                    }
-                    .tree li::after {
-                    right: auto;
-                    left: 50%;
-                    border-left: 1px solid #ccc;
-                    }
-                    /*We need to remove left-right connectors from elements without any siblings*/
-                    .tree li:only-child::after, .tree li:only-child::before {
-                    display: none;
-                    }
-                    /*Remove space from the top of single children*/
-                    .tree li:only-child {
-                    padding-top: 0;
-                    }
-                    /*Remove left connector from first child and right connector from last child*/
-                    .tree li:first-child::before, .tree li:last-child::after {
-                    border: 0 none;
-                    }
-                    /*Adding back the vertical connector to the last nodes*/
-                    .tree li:last-child::before {
-                    border-right: 1px solid #ccc;
-                    border-radius: 0 5px 0 0;
-                    -webkit-border-radius: 0 5px 0 0;
-                    -moz-border-radius: 0 5px 0 0;
-                    }
-                    .tree li:first-child::after {
-                    border-radius: 5px 0 0 0;
-                    -webkit-border-radius: 5px 0 0 0;
-                    -moz-border-radius: 5px 0 0 0;
-                    }
-                    /*Time to add downward connectors from parents*/
-                    .tree ul ul::before {
-                    content: '';
-                    position: absolute;
-                    top: 0;
-                    left: 50%;
-                    border-left: 1px solid #ccc;
-                    width: 0;
-                    height: 20px;
-                    }
-                    .tree li div {
-                    border: 1px solid #ccc;
-                    padding: 5px 10px;
-                    text-decoration: none;
-                    color: #666;
-                    font-family: arial, verdana, tahoma;
-                    font-size: 1em;
-                    display: inline-block;
-                    min-width: 80px;
-                    min-height: 30px;
-                    border-radius: 5px;
-                    -webkit-border-radius: 5px;
-                    -moz-border-radius: 5px;
-                    transition: all 0.5s;
-                    -webkit-transition: all 0.5s;
-                    -moz-transition: all 0.5s;
-                    }
-                    .tree li div .herren {
-                    background-color:lightblue;
-                    display: inline-block;
-                    width:8em;
-                    padding:10px;
-                    border-radius: 5px;
-                    -webkit-border-radius: 5px;
-                    -moz-border-radius: 5px;
-                    }
-                    .tree li div .damen, .tree li div .damenaccessoires {
-                    background-color:#f2d9e6;
-                    height: auto;
-                    display: inline-block;
-                    width:8em;
-                    padding:10px;
-                    border-radius: 5px;
-                    -webkit-border-radius: 5px;
-                    -moz-border-radius: 5px;
-                    }
-                    .tree li div .kinder {
-                    background-color:#9fdfbf;
-                    display: inline-block;
-                    width:8em;
-                    padding:10px;
-                    border-radius: 5px;
-                    -webkit-border-radius: 5px;
-                    -moz-border-radius: 5px;
-                    }
-                    .tree li div .top_h {
-                    background-color:#999999;
-                    display: inline-block;
-                    width:90px;
-                    padding:10px;
-                    border-radius: 5px;
-                    -webkit-border-radius: 5px;
-                    -moz-border-radius: 5px;
-                    }
-                    .tree li div .spacer {
-                    background-color:lightblue;
-                    display: inline-block;
-                    width:10px;
-                    }
-                    /*Time for some hover effects*/
-                    /*We will apply the hover effect the the lineage of the element also*/
-                    .tree li div:hover, .tree li div:hover + ul li div {
-                    background: #c8e4f8;
-                    color: #000;
-                    border: 1px solid #94a0b4;
-                    }
-                    /*Connector styles on hover*/
-                    .tree li div:hover + ul li::after,
-                    .tree li div:hover + ul li::before,
-                    .tree li div:hover + ul::before,
-                    .tree li div:hover + ul ul::before {
-                    border-color: #94a0b4;
-                    }
-        </style>
 
+            /* Hierarchical tree */
+            .tree {
+            position:relative;
+            min-width: 200px;
+            min-height:200px;
+            }
+            .tree ul {
+            word-wrap: break-word;
+            padding-top: 20px;
+            padding-left:5px;
+            padding-right:5px;
+            position: relative;
+            transition: all 0.5s;
+            -webkit-transition: all 0.5s;
+            -moz-transition: all 0.5s;
+            }
+            .tree li {
+            float: left;
+            text-align: center;
+            list-style-type: none;
+            position: relative;
+            padding: 20px 5px 0 0px;
+            transition: all 0.5s;
+            -webkit-transition: all 0.5s;
+            -moz-transition: all 0.5s;
+            }
+            /*We will use ::before and ::after to draw the connectors*/
+            .tree li::before, .tree li::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 50%;
+            border-top: 1px solid #ccc;
+            width: 50%;
+            height: 20px;
+            }
+            .tree li::after {
+            right: auto;
+            left: 50%;
+            border-left: 1px solid #ccc;
+            }
+            /*We need to remove left-right connectors from elements without any siblings*/
+            .tree li:only-child::after, .tree li:only-child::before {
+            display: none;
+            }
+            /*Remove space from the top of single children*/
+            .tree li:only-child {
+            padding-top: 0;
+            }
+            /*Remove left connector from first child and right connector from last child*/
+            .tree li:first-child::before, .tree li:last-child::after {
+            border: 0 none;
+            }
+            /*Adding back the vertical connector to the last nodes*/
+            .tree li:last-child::before {
+            border-right: 1px solid #ccc;
+            border-radius: 0 5px 0 0;
+            -webkit-border-radius: 0 5px 0 0;
+            -moz-border-radius: 0 5px 0 0;
+            }
+            .tree li:first-child::after {
+            border-radius: 5px 0 0 0;
+            -webkit-border-radius: 5px 0 0 0;
+            -moz-border-radius: 5px 0 0 0;
+            }
+            /*Time to add downward connectors from parents*/
+            .tree ul ul::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            border-left: 1px solid #ccc;
+            width: 0;
+            height: 20px;
+            }
+            .tree li div {
+            border: 1px solid #ccc;
+            padding: 5px 10px;
+            text-decoration: none;
+            color: #666;
+            font-family: arial, verdana, tahoma;
+            font-size: 1em;
+            display: inline-block;
+            min-width: 80px;
+            min-height: 30px;
+            border-radius: 5px;
+            -webkit-border-radius: 5px;
+            -moz-border-radius: 5px;
+            transition: all 0.5s;
+            -webkit-transition: all 0.5s;
+            -moz-transition: all 0.5s;
+            }
+            .tree li div .herren {
+            background-color:lightblue;
+            display: inline-block;
+            width:8em;
+            padding:10px;
+            border-radius: 5px;
+            -webkit-border-radius: 5px;
+            -moz-border-radius: 5px;
+            }
+            .tree li div .damen, .tree li div .damenaccessoires {
+            background-color:#f2d9e6;
+            height: auto;
+            display: inline-block;
+            width:8em;
+            padding:10px;
+            border-radius: 5px;
+            -webkit-border-radius: 5px;
+            -moz-border-radius: 5px;
+            }
+            .tree li div .kinder {
+            background-color:#9fdfbf;
+            display: inline-block;
+            width:6em;
+            padding:10px;
+            border-radius: 5px;
+            -webkit-border-radius: 5px;
+            -moz-border-radius: 5px;
+            }
+            .tree li div .top_h {
+            background-color:#999999;
+            display: inline-block;
+            width:90px;
+            padding:10px;
+            border-radius: 5px;
+            -webkit-border-radius: 5px;
+            -moz-border-radius: 5px;
+            }
+            .tree li div .spacer {
+            background-color:lightblue;
+            display: inline-block;
+            width:10px;
+            }
+            /*Time for some hover effects*/
+            /*We will apply the hover effect the the lineage of the element also*/
+            .tree li div:hover, .tree li div:hover + ul li div {
+            background: #c8e4f8;
+            color: #000;
+            border: 1px solid #94a0b4;
+            }
+            /*Connector styles on hover*/
+            .tree li div:hover + ul li::after,
+            .tree li div:hover + ul li::before,
+            .tree li div:hover + ul::before,
+            .tree li div:hover + ul ul::before {
+            border-color: #94a0b4;
+            }
+        </style>
+        <!---Some JS for loading screen and click for tree cells, does not work -->
             <script type="text/javascript">
                 function loading(){
                     $("#loading").show();
@@ -199,18 +202,19 @@
                     });
             </script>
     </head>
+
     <body style="position: relative;">
-        <div id="loading"></div>
-    <div id="content">
-                    <div class="w3-container w3-black w3-margin-left w3-margin-right">
-                        <form method="post" enctype=multipart/form-data>
+        <div id="loading"></div><!---Not working loading screen -->
+    <div id="content"> <!---For not working loading screen -->
+
+                    <div class="w3-container w3-black w3-margin-left w3-margin-right"> <!---Line on top with name and models -->
+                        <form method="post" enctype=multipart/form-data> <!---Form for flask, to select model -->
                         <div ><h1><image src="{{ url_for('static', filename='logo.webp') }}" /> fashion classification with 
 
-                            
-                                <div class="w3-dropdown-hover" ><h1>{{ used_model[:-3] }}</h1>
+                                <div class="w3-dropdown-hover" ><h1>{{ used_model[:-3] }}</h1> <!---Used model in title -->
                                 <div class="w3-dropdown-content w3-bar-block w3-border">
                         
-                                    {% for item in models %}
+                                    {% for item in models %} <!---List available models -->
                                     <button style="display: inline-block;" class="w3-bar-item w3-button h1_hover" id="used_model" name="used_model" value="{{ item }}" type="submit">{{ item[:-3] }}</button>
                                     {% endfor %}
                                     </div>
@@ -219,21 +223,19 @@
                             
                         </h1></div>
                         </form>
+                    </div>                 <!---End of line on top with name and models -->
 
-                    </div>
-        <div class="w3-container w3-white w3-margin-left w3-margin-right">
-                <!--- <div class="w3-col m6" ><h3 style="color: #b3b3b3">{{ img }}</h3></div>-->
+        <div class="w3-container w3-white w3-margin-left w3-margin-right"> <!---Line with select images -->
                     <form method=post enctype=multipart/form-data style="position: relative; padding-top: 1%">
                         <input type=file name=file class="w3-input w3-border-0 w3-col m4" id="file">
                         <input value="Upload my image" type=submit class="w3-button w3-white w3-border w3-hover-black w3-round-large w3-padding-small w3-col m2" />                 
                     </form>
                 <div class="w3-col m6" ><h3 style="color: #b3b3b3"></h3></div>
-        </div>
+        </div>                   <!---End of line with select images -->
 
-        <div class="w3-container w3-white w3-margin-left w3-margin-right w3-white">
-
-                    
-            <div class="w3-col w3-left w3-white m4" >
+        <div class="w3-container w3-white w3-margin-left w3-margin-right w3-white"> <!---Container with main content -->
+                
+            <div class="w3-col w3-left w3-white m4" > <!---Image and left-right buttons  on the left-->
                 <div class="w3-display-container mySlides" style="width:100%"; >
                 <img class="w3-border w3-white" style="max-width:100%;" src="{{ img }}"/>
                 <a id="leftbtn" name="leftbtn" class="w3-button w3-display-left" href="/{{ prev_img }}" onclick="loading();">&#10094;</a>
@@ -241,45 +243,42 @@
                 onclick="loading();">&#10095;</a>
                 <div><h3 style="color: #b3b3b3">{{ img }}</h3></div>
             </div>
-            </div>
+            </div>        <!---End of image and left-right buttons -->
 
-            <div class="w3-col w3-right w3-white m8">
+            <div class="w3-col w3-right w3-white m8"> <!---Hierarchy, fatures on the right -->
                    <form id="form1">
      
-                    <div class="tree">
+                    <div class="tree"> <!---Hierarchy tree -->
                         <ul>
                             <li><div><span class="top_h">Hierarchy</span></div>
                             <ul>
-                            {% for item in final_dict %}
+                            {% for item in final_dict %} <!---Loop through first hirarchy -->
                                 <li><div style="background-color:{{ final_dict[item]['color'] }};"><span class="{{ item }}">{{ final_dict[item]['name'] }}</span></div>
-                                {% if final_dict[item]['subh']!=[] %}
+                                {% if final_dict[item]['subh']!=[] %} <!---Check if there is second hierarchy -->
                                 <ul> 
-                                    {% for subh in final_dict[item]['subh'] %}
+                                    {% for subh in final_dict[item]['subh'] %} <!---Loop through second hirarchy -->
                                         <li><div style="background-color:{{ subh['color'] }};"><span class="{{ item }}">{{ subh['name'] }}</span></div>
-                                            {% if subh['subh']!=[] %}
+                                            {% if subh['subh']!=[] %}<!---Check if there is third hierarchy -->
                                                 <ul> 
                                                     {% for subhs in subh['subh'] %}
                                                         <li><div style="background-color:{{ subhs['color'] }};"><span class="{{ item }}">{{ subhs['name'] }}</span></div></li>
-                                                    {% endfor %}
-                                                    
+                                                    {% endfor %}<!---End of loop through third hirarchy -->                                                    
                                                 </ul>
-                                                {% endif %}
+                                                {% endif %}<!---End of check if there is third hierarchy -->
 
                                         </li>
-                                    {% endfor %}
+                                    {% endfor %}<!---End of loop through second hirarchy -->
                                     
                                 </ul>
-                                {% endif %}
-
-                                </li>
-
-                            {% endfor %}
-                             
+                                {% endif %}<!---End of check if there is second hierarchy -->
+                               </li>
+                            {% endfor %}<!---End for loop through first hirarchy -->                             
                             </ul>
                     </div>
-                </form>
-                <ul class="w3-hoverable w3-ul w3-white w3-container" style="min-width:250px; padding-left:10%; padding-right:30%">
-                        <h4>Color</h4>
+                </form><!---End of Hierarchy tree -->
+
+                <ul class="w3-hoverable w3-ul w3-white w3-container" style="min-width:250px; padding-left:10%; padding-right:30%"><!---List features -->
+                        <h4>Color</h4> <!---Colors, from model and from median -->
                         <li class="w3-display-container" style="min-width:250px;">{{ color }}
                               <span onclick="this.parentElement.style.display='none'"
                               class="w3-button w3-display-right">&times;</span>
@@ -287,19 +286,19 @@
                         <li class="w3-display-container" style="min-width:250px; background-color:{{ col_s }} ">{{ col_s }}
                               <span onclick="this.parentElement.style.display='none'"
                               class="w3-button w3-display-right">&times;</span>
-                        </li>
-                        <h4>Features</h4>
-                        {% for item in data %}
+                        </li> <!---End of colors, from model and from median -->
+                        <h4>Features</h4> 
+                        {% for item in data %} <!---Features above 70% from model -->
                         <li class="w3-display-container" style="min-width:250px; ">{{ item }}
                               <span onclick="this.parentElement.style.display='none'"
                               class="w3-button w3-display-right">&times;</span>
                         </li>
-                        {% endfor %}
-                        <li> 
+                        {% endfor %} <!--- end of features above 70% from model -->
+                        <li> <!---Features below 70% from model -->
                             <div class="dropdown">
                            <form method="post" enctype=multipart/form-data>
                               <button class="w3-dropbtn w3-button">- Other features</button>
-                              <div class="dropdown-content w3-bar-block w3-border">
+                              <div class="dropdown-content w3-bar-block w3-border"> 
                                 {% for item in rest_features %}
                                 <button class="w3-bar-item w3-button" id="rest_f" name="rest_f" value="{{ item }}" type="submit">{{ item }}</button>
                                 {% endfor %}
@@ -307,15 +306,15 @@
                               </div>
                           </form>
                             </div>
-                        </li>
-                    </ul>
+                        </li> <!---End of features below 70% from model -->
+                    </ul> <!--- End of list features -->
 
             
 
             </div>
-    </div>
+    </div> <!---Kinda footer -->
         <div class="w3-container w3-black w3-margin-left w3-margin-right w3-center">
             © Fabio&Masha@Propulsion Academy - 11.2019
-        </div>
+        </div> <!---End of kinda footer -->
     </body>
 </html>
