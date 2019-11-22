@@ -113,22 +113,21 @@ model and adding some own layers. The structure is the following:
 This model by retraining the last two blocks of the ResNet50 model (~layer 143 to the end) with a learning rate of 0.001, the Adam optimizer and "Relu" activation for the intermediate
 Dense layer produced good results. 
 
-Besides the above specified structure, also an self-constructure Convolutional Neural
-Network structure exists. This can be trained by simply changing "model_type" in the
-settings from "r50" (ResNet50) to "own". 
+Besides the above specified structure, also a assembled from scratch Convolutional Neural
+Network exists. This can be trained by simply changing "model_type" in the settings from "r50" (ResNet50) to "own". 
 
 Also to mention is that most of training of a model can be easily steered by simply
 making changes in the setting section at the top of the script "cnn_globus.py". 
 
 In terms of output, the model is saved after every fifth epoch (as currently specified 
-like that in the settings), is validated after every epoch (as currently spedified like
-that in the settings) and the losses and accuracies are saved in a log file. Furthermore,
-the model is saved at the end together with various self-created outputs, such as 
+in the settings), validated after every epoch (as currently spedified in the settings)
+and the losses and accuracies are saved in a log file. Furthermore,
+the model is saved at the end together with various custom outputs, such as 
 confusion matrices, validation predictions, etc.
 
 ### d_web
 This folder contains all the necessary code snippets for running the UI created for this
-project. The UI allows to upload images and the predict them based on several underlying
+project. The UI allows to upload images and predict them based on several underlying
 models and provides a visual probability tree for the classification of the images. Further,
 the UI also shows the features that can be added or removed upon description. In order to start the UI, navigate to this folder in the command line and type the following command: 
 "FLASK_ENV=development flask run". After running this command, the address is displayed
